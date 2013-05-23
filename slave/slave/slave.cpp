@@ -70,18 +70,23 @@
 	
 	// Flags
 	bool				flag_enable = false;	// Motor output enable
+	bool				flag_calibrate = false;	// Encoder calibration flag
 
 	// Miscellaneous
 	unsigned long		i = 0;			// Dummy counter
+	
+	// Objects
+	motor mtr;
+	serial sport;
 
 //============================================================================================================
 /* State-Transition Logic Tasks */
 
 // Motor Task
 
-	unsigned char motor_task(unsigned char state_motor, *motor the_motor)
+	unsigned char motor_task(unsigned char state_motor, motor* the_motor)
 	{
-		mtr = the_motor;
+		mtr = *the_motor;
 		
 		switch(state_motor)
 		{
@@ -144,10 +149,10 @@
 	
 // Data Task
 
-	unsigned char data_task(unsigned char state_data, *serial serial_port, *motor the_motor)
+	unsigned char data_task(unsigned char state_data, serial* serial_port, motor* the_motor)
 	{
-		sport = serial_port;
-		mtr = the_motor;
+		sport = *serial_port;
+		mtr = *the_motor;
 		
 		switch(state_data)
 		{
@@ -167,7 +172,7 @@
 				switch(character_in)
 				{
 					case('N'):	// New Set Point
-						sport.send("n");		// Confirm command reception
+						sport.send('n');		// Confirm command reception
 						state_data = 6;		// Go to state 6
 						break;
 					case('S'):	// Stop Motor
@@ -179,7 +184,7 @@
 						state_data = 1;		// Go to state 1
 						break;
 					case('C'):	// Calibrate
-						sport.send("c");		// Confirm command reception
+						sport.send('c');		// Confirm command reception
 						flag_calibrate = !flag_calibrate;	// Toggle calibration flag
 						state_data = 5;		// Go to state 5
 						break;
