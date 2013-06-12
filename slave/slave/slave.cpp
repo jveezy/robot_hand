@@ -26,6 +26,7 @@
 
 #include "motor.h"			// Motor Object
 #include "serial.h"			// Serial Object
+#include "angles.h"			// Angle Configuration
 
 //============================================================================================================
 /* Definitions */
@@ -55,6 +56,11 @@
 	unsigned char		previous_reading = 0;	// Last encoder quadrature reading
 	unsigned char		errors = 0;			// Number of encoder errors
 	
+	// Configuration
+	unsigned char		kp_array[10];
+	unsigned char		ki_array[10];
+	unsigned char		kd_array[10];
+	unsigned char		set_point_angles[10];
 
 	// Control Loop
 	unsigned short int	desired_count;		// Desired encoder count
@@ -63,6 +69,8 @@
 	unsigned char		ki;				// Integral gain
 	unsigned char		kd;				// Derivative gain
 	long int			motor_output;		// PWM value to output to the motor
+	unsigned char		set_point = 1;		// Set point (1-5) for motor position
+	unsigned char		motor_number;		// '1'-'0' identification of which motor number
 
 	// State Transition Logic
 	unsigned char 		state_motor = 0;	// Next state to jump into in motor task
@@ -74,6 +82,7 @@
 
 	// Miscellaneous
 	unsigned long		i = 0;			// Dummy counter
+	unsigned char		i_angle = 0;	// Angle count
 	
 	// Objects
 	motor mtr;
@@ -171,31 +180,94 @@
 				// Interpret character
 				switch(character_in)
 				{
-					case('N'):	// New Set Point
-						sport.send('n');		// Confirm command reception
-						state_data = 6;		// Go to state 6
+					// a,b,c,d,e define set points
+					case('a'):
+					case('b'):
+					case('c'):
+					case('d'):
+					case('e'):
+						switch(character_in)
+						{
+							case('a'):						
+								set_point = 1;
+								break;
+							case('b'):
+								set_point = 2;
+								break;
+							case('c'):
+								set_point = 3;
+								break;
+							case('d'):
+								set_point = 4;
+								break;
+							case('e'):
+								set_point = 5;
+								break;
+							default:
+								break;
+						}
+						sport.send('A');		// Confirm command reception
+						state_data = 6;
 						break;
+					// S,G disable and enable the motor
 					case('S'):	// Stop Motor
 						flag_enable = false;	// Disable motor
 						state_data = 1;		// Go to state 1
+						sport.send('s');		// Confirm command reception
 						break;
 					case('G'):	// Go (enable motor)
 						flag_enable = true;		// Enable motor
-						state_data = 1;		// Go to state 1
+						state_data = 1;			// Go to state 1
+						sport.send('g');		// Confirm command reception
 						break;
+					// C clears the encoder count to calibrate the motor position
 					case('C'):	// Calibrate
-						sport.send('c');		// Confirm command reception
 						flag_calibrate = !flag_calibrate;	// Toggle calibration flag
-						state_data = 5;		// Go to state 5
+						state_data = 5;						// Go to state 5
+						sport.send('c');					// Confirm command reception
 						break;
-					case('K'):	// Set Kp
-						break;
+					// Q queries to identify whether the motor is done moving to the correct position
 					case('Q'):	// Position Query from master chip
+						state_data = 2;
+						break;
+					case('1'):	// Identify motor
+					case('2'):
+					case('3'):
+					case('4'):
+					case('5'):
+					case('6'):
+					case('7'):
+					case('8'):
+					case('9'):
+						motor_number = character_in - 0x30;
+						state_data = 3;
+						break;
+					case('0'):
+						motor_number = 10;
+						state_data = 3;
 						break;
 					default:
 						state_data = 1;	// Return to state 1 if character is unclear
 						break;
 				}
+				break;
+			case(2):		// Position Query
+				state_data = 1;
+				break;
+			case(3):		// Motor Identification and data loading
+				// Load angle data
+				for (i_angle = 0; i < 5; i++)
+				{
+					set_point_angles[i_angle] = angles[i_angle][motor_number-1];
+				}
+				
+				// Load gain data
+				kp = kp_array[motor_number-1];
+				
+				// Send confirmation back to master
+				sport.send('!');
+				
+				state_data = 1;
 				break;
 			case(5):		// Calibrate
 				if (!flag_calibrate)	// If the calibration flag has been turned off
@@ -204,17 +276,9 @@
 				}
 				state_data = 1;	// Always return to state 1
 				break;
-			case(6):		// Wait for Data
-				if (sport.check_for_char())	// If a character has been received
-				{
-					count_input = sport.getchar();	// store it
-					desired_count = ((unsigned short int) (count_input << 2)) + 1;	// Then set it
-					state_data = 1;	// Go back to state 1 when done
-				}
-				else		// If a character hasn't been received
-				{
-					state_data = 6;	// Stay in this state
-				}
+			case(6):		// New set point
+				desired_count = set_point_angles[set_point-1];
+				state_data = 1;
 				break;
 			default:
 				state_data = 1;
