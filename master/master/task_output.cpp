@@ -268,3 +268,251 @@ void task_output::change_output(unsigned char finger, unsigned char configuratio
 	finger_configuration[finger] = configuration;
 	flag_output_change = true;
 }
+
+void task_output::stop_motor(unsigned char motornum)
+{
+	p_slave_chooser->choose(motornum);
+	if(p_serial_slave->ready_to_send())
+	{
+		*p_serial_slave << "S";
+		input_character = p_serial_comp->getchar();		// Wait for response
+		if (input_character != 's')
+		{
+			*p_serial_comp << endl << "Motor stop error " << motornum << endl;
+		}
+	}
+}
+
+void task_output::start_motor(unsigned char motornum)
+{
+	p_slave_chooser->choose(motornum);
+	if(p_serial_slave->ready_to_send())
+	{
+		*p_serial_slave << "G";
+		input_character = p_serial_comp->getchar();		// Wait for response
+		if (input_character != 'g')
+		{
+			*p_serial_comp << endl << "Motor enable error " << motornum << endl;
+		}
+	}
+}
+
+bool task_output::query_motor(unsigned char motornum)
+{
+	p_slave_chooser->choose(motornum);
+	if(p_serial_slave->ready_to_send())
+	{
+		*p_serial_slave << "Q";
+		input_character = p_serial_comp->getchar();		// Wait for response
+		if (input_character == 'Q')
+		{
+			return(false);
+		}
+		else if (input_character == 'q')
+		{
+			return(true);
+		}
+		else
+		*p_serial_comp << endl << "Motor query error " << motornum << endl;
+	}
+}
+
+void task_output::init_motor(unsigned char motornum)
+{
+	p_slave_chooser->choose(motornum);
+	if(p_serial_slave->ready_to_send())
+	{
+		if (motornum > 0 && motornum < 10)
+		character_to_output = motornum + 0x30;
+		else if (motornum == 10)
+		character_to_output = '0';
+		else
+		*p_serial_comp << endl << "Motor conf error " << motornum << endl;
+		*p_serial_slave << character_to_output;
+		input_character = p_serial_comp->getchar();		// Wait for response
+		if (input_character != '!')
+		{
+			*p_serial_comp << endl << "Motor conf error " << motornum << endl;
+		}
+	}
+}
+
+void task_output::set_motor(unsigned char motornum, unsigned char setpoint)
+{
+	if (motornum < 12)
+	{
+		p_slave_chooser->choose(motornum);
+		if(p_serial_slave->ready_to_send())
+		{
+			*p_serial_slave << setpoint;
+			input_character = p_serial_comp->getchar();		// Wait for response
+			if (input_character != 'A')
+			{
+				*p_serial_comp << endl << "Motor set error " << motornum << endl;
+			}
+		}
+	}
+	else
+	
+	
+}
+
+void task_output::open_thumb(void)
+{
+	set_motor(5,'a');
+}
+
+void task_output::open_index(void)
+{
+	set_motor(1,'a');
+}
+
+void task_output::open_middle(void)
+{
+	set_motor(2,'a');
+}
+
+void task_output::open_ring(void)
+{
+	set_motor(3,'a');
+}
+
+void task_output::open_pinky(void)
+{
+	set_motor(4,'a');
+}
+
+void task_output::thumb_flat_up(void)
+{
+	set_motor(5,'a');
+	set_motor(6,'a');
+	set_motor(7,'a');
+	set_motor(8,'a');
+}
+
+void task_output::thumb_fold_up(void)
+{
+	set_motor(5,'e');
+	set_motor(6,'a');
+	set_motor(7,'a');
+	set_motor(8,'a');
+}
+
+void task_output::thumb_fold_in(void)
+{
+	set_motor(5,'c');
+	set_motor(6,'c');
+	set_motor(7,'e');
+	set_motor(8,'a');
+}
+
+void task_output::thumb_fold_out(void)
+{
+	set_motor(5,'e');
+	set_motor(6,'a');
+	set_motor(7,'b');
+	set_motor(8,'b');
+}
+
+void task_output::thumb_stretch(void)
+{
+	set_motor(5,'a');
+	set_motor(6,'e');
+	set_motor(7,'a');
+	set_motor(8,'a');
+}
+
+void task_output::thumb_curl(void)
+{
+	set_motor(5,'e');
+	set_motor(6,'b');
+	set_motor(7,'b');
+	set_motor(8,'b');
+}
+
+void task_output::index_stretch(void)
+{
+	set_motor(1,'a');
+	set_motor(9,'a');
+}
+
+void task_output::index_curl(void)
+{
+	set_motor(1,'c');
+	set_motor(9,'c');
+}
+
+void task_output::index_clench(void)
+{
+	
+}
+
+void task_output::index_vert_clench(void)
+{
+	
+}
+
+void task_output::index_cross(void)
+{
+	
+}
+
+void task_output::index_fold(void)
+{
+	
+}
+
+void task_output::middle_stretch(void)
+{
+	
+}
+
+void task_output::middle_curl(void)
+{
+	
+}
+
+void task_output::middle_clench(void)
+{
+	
+}
+
+void task_output::middle_vert_clench(void)
+{
+	
+}
+
+void task_output::middle_fold(void)
+{
+	
+}
+
+void task_output::ring_stretch(void)
+{
+	
+}
+
+void task_output::ring_curl(void)
+{
+	
+}
+
+void task_output::ring_clench(void)
+{
+	
+}
+
+void task_output::pinky_stretch(void)
+{
+	
+}
+
+void task_output::pinky_curl(void)
+{
+	
+}
+
+void task_output::pinky_clench(void)
+{
+	
+}

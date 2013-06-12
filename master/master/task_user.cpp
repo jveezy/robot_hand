@@ -330,7 +330,7 @@ char task_user::run (char state)
 				}
 				break;
 		// Retrieve and set gesture output values	
-		case(8):
+/*		case(8):
 				// Pinky
 				output_configuration = p_character_database -> character_array[index].get_config(0,current_step);	// Retrieve from database
 				p_task_output -> change_output (0 , output_configuration);					// Send to output task
@@ -376,6 +376,7 @@ char task_user::run (char state)
 					return(7);	// If not. Go back to the delay state.
 				}
 				break;
+*/
 		// Done
 		case(9):
 				*p_serial_comp << endl << "Message done. Returning to message prompt." << endl;
@@ -385,87 +386,4 @@ char task_user::run (char state)
 	}
 	// If we get here, no transition is called for
 	return (STL_NO_TRANSITION);
-}
-
-void task_user::stop_motor(unsigned char motornum)
-{
-	p_slave_chooser->choose(motornum);
-	if(p_serial_slave->ready_to_send())
-	{
-		*p_serial_slave << "S";
-		input_character = p_serial_comp->getchar();		// Wait for response
-		if (input_character != 's')
-		{
-			*p_serial_comp << endl << "Motor stop error " << motornum << endl;
-		}
-	}
-}
-
-void task_user::start_motor(unsigned char motornum)
-{
-	p_slave_chooser->choose(motornum);
-	if(p_serial_slave->ready_to_send())
-	{
-		*p_serial_slave << "G";
-		input_character = p_serial_comp->getchar();		// Wait for response
-		if (input_character != 'g')
-		{
-			*p_serial_comp << endl << "Motor enable error " << motornum << endl;
-		}
-	}
-} 
-
-bool task_user::query_motor(unsigned char motornum)
-{
-	p_slave_chooser->choose(motornum);
-	if(p_serial_slave->ready_to_send())
-	{
-		*p_serial_slave << "Q";
-		input_character = p_serial_comp->getchar();		// Wait for response
-		if (input_character == 'Q')
-		{
-			return(false);
-		}
-		else if (input_character == 'q')
-		{
-			return(true);
-		}
-		else
-			*p_serial_comp << endl << "Motor query error " << motornum << endl;
-	}
-}
-
-void task_user::init_motor(unsigned char motornum)
-{
-	p_slave_chooser->choose(motornum);
-	if(p_serial_slave->ready_to_send())
-	{
-		if (motornum > 0 && motornum < 10)
-			character_to_output = motornum + 0x30;
-		else if (motornum == 10)
-			character_to_output = '0';
-		else
-			*p_serial_comp << endl << "Motor conf error " << motornum << endl;
-		*p_serial_slave << character_to_output;
-		input_character = p_serial_comp->getchar();		// Wait for response
-		if (input_character != '!')
-		{
-			*p_serial_comp << endl << "Motor conf error " << motornum << endl;
-		}
-	}
-}
-
-void task_user::set_motor(unsigned char motornum, unsigned char setpoint)
-{
-	p_slave_chooser->choose(motornum);
-	if(p_serial_slave->ready_to_send())
-	{
-		*p_serial_slave << setpoint;
-		input_character = p_serial_comp->getchar();		// Wait for response
-		if (input_character != 'A')
-		{
-			*p_serial_comp << endl << "Motor set error " << motornum << endl;
-		}
-	}
-	
 }

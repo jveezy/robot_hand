@@ -73,6 +73,12 @@ class task_output : public stl_task
 		// Change Output Values
 		void change_output(unsigned char, unsigned char);
 
+		
+		void stop_motor (unsigned char);
+		void start_motor (unsigned char);
+		bool query_motor (unsigned char);
+		void init_motor (unsigned char);
+		void set_motor (unsigned char);
 };
 
 #endif

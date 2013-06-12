@@ -69,12 +69,6 @@ class task_user : public stl_task
 
 		// The run method is where the task actually performs its function
 		char run (char);
-		
-		void stop_motor (unsigned char);
-		void start_motor (unsigned char);
-		bool query_motor (unsigned char);
-		void init_motor (unsigned char);
-		void set_motor (unsigned char);
 
 };
 
