@@ -61,6 +61,14 @@ task_output::task_output (task_timer& a_timer, time_stamp& t_stamp, base_text_se
 		output[i] = 0;
 	}
 	
+	// Initialize variables
+	flag_interference_thumb = false;
+	flag_interference_index = false;
+	flag_interference_middle = false;
+	flag_interference_ring = false;
+	flag_interference_pinky = false;
+	character_step = 1;
+	
 }
 
 //-------------------------------------------------------------------------------------
@@ -77,187 +85,336 @@ char task_output::run (char state)
 	{
 		// Wait for output change
 		case(0):		
-				if(flag_output_change)
-				{
-					flag_output_change = false;
-					return(1);	// Go to state 1 (collect outputs)
-				}
-				break;
-				
+			if(flag_output_change)
+			{
+				flag_output_change = false;
+				return(1);	// Go to state 1 (Check for interferences)
+			}
+			break;
+		// Check for interferences		
+		case(1):
+			if(flag_interference_thumb)
+			{
+				open_thumb();
+				flag_interference_thumb = false;
+			}
+			if(flag_interference_index)
+			{
+				open_index();
+				flag_interference_index = false;
+			}
+			if(flag_interference_middle)
+			{
+				open_middle();
+				flag_interference_middle = false;
+			}
+			if(flag_interference_ring)
+			{
+				open_ring();
+				flag_interference_ring = false;
+			}
+			if(flag_interference_pinky)
+			{
+				open_pinky();
+				flag_interference_pinky = false;
+			}
+			return(2);
+			break;	
 		// Process outputs
-		case(1):		
-				// Pinky (finger configuration 0, motor 6)
-				switch(finger_configuration[0])
-				{
-					case(STRAIGHT):
-						output[6] = '0';
-						break;
-					case(CURL):
-						output[6] = '2';
-						break;
-					case(CLENCH):
-						output[6] = '4';
-						break;
-					default:
-						GLOB_DEBUG("Error");
-						break;	
-				}
-				
-				// Ring (finger configuration 1, motor 5)
-				switch(finger_configuration[1])
-				{
-					case(STRAIGHT):
-						output[5] = '0';
-						break;
-					case(CURL):
-						output[5] = '2';
-						break;
-					case(CLENCH):
-						output[5] = '4';
-						break;
-					default:
-						GLOB_DEBUG("Error");
-						break;	
-				}
-				
-				// Middle (finger configuration 2, motors 3 and 4)
-				switch(finger_configuration[2])
-				{
-					case(STRAIGHT):
-						output[4] = '0';
-						output[3] = '0';
-						break;
-					case(CURL):
-						output[4] = '2';
-						output[3] = '2';
-						break;
-					case(CLENCH):
-						output[4] = '4';
-						output[3] = '4';
-						break;
-					case(VERTICAL_CLENCH):
-						output[4] = '4';
-						output[3] = '0';
-						break;
-					case(HORIZONTAL_STRAIGHT):
-						output[4] = '0';
-						output[3] = '4';
-						break;
-					default:
-						GLOB_DEBUG("Error");
-						break;	
-				}
-				
-				// Index (finger configuration 3, motors 1 and 2)
-				switch(finger_configuration[3])
-				{
-					case(STRAIGHT):
-						output[2] = '0';
-						output[1] = '0';
-						break;
-					case(CURL):
-						output[2] = '2';
-						output[1] = '2';
-						break;
-					case(CLENCH):
-						output[2] = '4';
-						output[1] = '4';
-						break;
-					case(VERTICAL_CLENCH):
-						output[2] = '0';
-						output[1] = '4';
-						break;
-					case(HORIZONTAL_STRAIGHT):
-						output[2] = '4';
-						output[1] = '0';
-						break;
-					case(SLANTED_STRAIGHT):
-						output[2] = '0';
-						output[1] = '2';
-						break;
-					default:
-						GLOB_DEBUG("Error");
-						break;	
-				}
-				
-				// Index spread (finger configuration 4, motor 11)
-				switch(finger_configuration[4])
-				{
-					case(0):
-						output[11] = '0';
-						break;
-					case(1):
-						output[11] = '1';
-						break;
-					default:
-						GLOB_DEBUG("Error");
-						break;	
-				}
-				
-				// Thumb (finger configuration 5, motors 7, 8, 9, and 10)
-				switch(finger_configuration[5])
-				{
-					case(FLAT_SIDE):
-						output[10] = '0';
-						output[9] = '0';
-						output[8] = '0';
-						output[7] = '0';
-						break;
-					case(OUT_SIDE):
-						output[10] = '0';
-						output[9] = '4';
-						output[8] = '0';
-						output[7] = '0';
-						break;
-					case(FOLD_FLAT):
-						output[10] = '3';
-						output[9] = '1';
-						output[8] = '3';
-						output[7] = '0';
-						break;
-					case(FOLD_STRAIGHT_OUT):
-						output[10] = '4';
-						output[9] = '4';
-						output[8] = '0';
-						output[7] = '0';
-						break;
-					case(FOLD_STRAIGHT_UP):
-						output[10] = '4';
-						output[9] = '0';
-						output[8] = '0';
-						output[7] = '0';
-						break;
-					case(THUMB_CURL):
-						output[10] = '4';
-						output[9] = '2';
-						output[8] = '1';
-						output[7] = '2';
-						break;
-					default:
-						GLOB_DEBUG("Error");
-						break;	
-				}
-				
-				// Wrist flexion/extension (finger configuration 6, motor 12)
-				output[12] = finger_configuration[6];
-				
-				// Wrist supination/pronation
-				output[13] = finger_configuration[7];
-				
-				return(2);	// Go to state 2 (output) when done
-				break;
-				
-		// Output to motor controllers
 		case(2):		
-				for(unsigned char i = 1; i < 14; i++)
-				{
-					p_motors->output(i,output[i]);
-				}
-				return(0);	// Return to state 0 (wait) when done
-				break;
-		
+			// Parse character
+			switch(character_to_output)
+			{
+				case('0'):
+				case('O'):
+				case('o'):
+					thumb_curl();
+					index_curl();
+					middle_curl();
+					ring_curl();
+					pinky_curl();
+					wrist_default();
+					return(0);
+					break;
+				case('1'):
+					thumb_flat_up();
+					index_stretch();
+					middle_clench();
+					ring_clench();
+					pinky_clench();
+					wrist_default();
+					return(0);
+					break;
+				case('2'):
+					thumb_flat_up();
+					index_stretch();
+					middle_stretch();
+					ring_clench();
+					pinky_clench();
+					wrist_default();
+					return(0);
+					break;
+				case('3'):
+					thumb_stretch();
+					index_stretch();
+					middle_stretch();
+					ring_clench();
+					pinky_clench();
+					wrist_default();
+					return(0);
+					break;
+				case('4'):
+				case('b'):
+				case('B'):
+					switch(character_step)
+					{
+						case(1):
+							thumb_fold_out();
+							index_stretch();
+							middle_stretch();
+							ring_stretch();
+							pinky_stretch();
+							wrist_default();
+							character_step++;
+							return(STL_NO_TRANSITION);
+						case(2):
+							thumb_fold_in();
+							flag_interference_thumb = true;
+							character_step = 1;
+							return(0);
+						default:
+							*p_serial_comp << endl << "Error character " << character_to_output << " step " << character_step << endl;
+					}
+					break;
+				case('5'):
+					thumb_stretch();
+					index_stretch();
+					middle_stretch();
+					ring_stretch();
+					pinky_stretch();
+					wrist_default();
+					return(0);
+					break;
+				case('6'):
+				case('W'):
+				case('w'):
+					switch(character_step)
+					{
+						case(1):
+							thumb_fold_out();
+							index_stretch();
+							middle_stretch();
+							ring_stretch();
+							pinky_clench();
+							wrist_default();
+							character_step++;
+							return(STL_NO_TRANSITION);
+						case(2):
+							thumb_fold_in();
+							flag_interference_thumb = true;
+							character_step = 1;
+							return(0);
+						default:
+							*p_serial_comp << endl << "Error character " << character_to_output << " step " << character_step << endl;
+					}
+					break;
+				case('7'):
+					switch(character_step)
+					{
+						case(1):
+							thumb_fold_out();
+							index_stretch();
+							middle_stretch();
+							ring_clench();
+							pinky_stretch();
+							wrist_default();
+							character_step++;
+							return(STL_NO_TRANSITION);
+						case(2):
+							thumb_fold_in();
+							flag_interference_thumb = true;
+							character_step = 1;
+							return(0);
+						default:
+							*p_serial_comp << endl << "Error character " << character_to_output << " step " << character_step << endl;
+					}
+					break;
+				case('8'):
+					switch(character_step)
+					{
+						case(1):
+							thumb_fold_out();
+							index_stretch();
+							middle_clench();
+							ring_stretch();
+							pinky_stretch();
+							wrist_default();
+							character_step++;
+							return(STL_NO_TRANSITION);
+						case(2):
+							thumb_fold_in();
+							flag_interference_thumb = true;
+							character_step = 1;
+							return(0);
+						default:
+							*p_serial_comp << endl << "Error character " << character_to_output << " step " << character_step << endl;
+					}
+					break;
+				case('9'):
+					thumb_flat_up();
+					index_clench();
+					middle_stretch();
+					ring_stretch();
+					pinky_stretch();
+					wrist_default();
+					return(0);
+					break;
+				case('A'):
+				case('a'):
+					thumb_flat_up();
+					index_clench();
+					middle_clench();
+					ring_clench();
+					pinky_clench();
+					wrist_default();
+					return(0);
+					break;
+				case('C'):
+				case('c'):
+					thumb_fold_out();
+					index_curl();
+					middle_curl();
+					ring_curl();
+					pinky_clench();
+					wrist_default();
+					return(0);
+					break;
+				case('D'):
+				case('d'):
+					thumb_curl();
+					index_stretch();
+					middle_curl();
+					ring_curl();
+					pinky_clench();
+					wrist_default();
+					return(0);
+					break;
+				case('E'):
+				case('e'):
+					switch(character_step)
+					{
+						case(1):
+							thumb_fold_out();
+							index_stretch();
+							middle_stretch();
+							ring_stretch();
+							pinky_stretch();
+							wrist_default();
+							character_step++;
+							return(STL_NO_TRANSITION);
+						case(2):
+							thumb_fold_in();
+							index_curl();
+							middle_curl();
+							ring_curl();
+							pinky_curl();
+							flag_interference_thumb = true;
+							flag_interference_index = true;
+							flag_interference_middle = true;
+							flag_interference_ring = true;
+							flag_interference_pinky = true;
+							character_step = 1;
+							return(0);
+						default:
+							*p_serial_comp << endl << "Error character " << character_to_output << " step " << character_step << endl;
+					}
+					break;
+				case('F'):
+				case('f'):
+					thumb_flat_up();
+					index_clench();
+					middle_stretch();
+					ring_stretch();
+					pinky_stretch();
+					wrist_default();
+					return(0);
+					break;
+				case('G'):
+				case('g'):
+					thumb_flat_up();
+					index_stretch();
+					middle_clench();
+					ring_clench();
+					pinky_clench();
+					wrist_bent();
+					return(0);
+					break;
+				case('H'):
+				case('h'):
+					thumb_flat_up();
+					index_stretch();
+					middle_stretch();
+					ring_clench();
+					pinky_clench();
+					wrist_bent();
+					return(0);
+					break;
+				case('I'):
+				case('i'):
+					thumb_flat_up();
+					index_clench();
+					middle_clench();
+					ring_clench();
+					pinky_stretch();
+					wrist_default();
+					return(0);
+					break;
+				case('J'):
+				case('j'):
+					switch(character_step)
+					{
+						case(1):
+							thumb_flat_up();
+							index_clench();
+							middle_clench();
+							ring_clench();
+							pinky_stretch();
+							wrist_default();
+							character_step++;
+							return(STL_NO_TRANSITION);
+						case(2):
+							wrist_bent();
+							character_step++;
+							return(STL_NO_TRANSITION);
+						case(3):
+							wrist_bent_and_twisted();
+							character_step++;
+							return(STL_NO_TRANSITION);
+						case(4):
+							wrist_twisted();
+							character_step = 1;
+							return(0);
+					}
+					break;
+				case('K'):
+				case('k'):
+					
+			}
+				
+			return(0);	// Go to state 2 (output) when done
+			break;
+				
+/*		// Output to motor controllers
+		case(2):		
+			for(unsigned char i = 1; i < 14; i++)
+			{
+				p_motors->output(i,output[i]);
+			}
+			return(0);	// Return to state 0 (wait) when done
+			break;
+*/		
 		default:
-				break;
+			break;
 	}
 	// If we get here, no transition is called for
 	return (STL_NO_TRANSITION);
@@ -266,6 +423,12 @@ char task_output::run (char state)
 void task_output::change_output(unsigned char finger, unsigned char configuration)
 {
 	finger_configuration[finger] = configuration;
+	flag_output_change = true;
+}
+
+void task_output::set_new_character(unsigned char outchar)
+{
+	character_to_output = outchar;
 	flag_output_change = true;
 }
 
@@ -323,11 +486,12 @@ void task_output::init_motor(unsigned char motornum)
 	if(p_serial_slave->ready_to_send())
 	{
 		if (motornum > 0 && motornum < 10)
-		character_to_output = motornum + 0x30;
+			character_to_output = motornum + 0x30;
 		else if (motornum == 10)
-		character_to_output = '0';
+			character_to_output = '0';
 		else
-		*p_serial_comp << endl << "Motor conf error " << motornum << endl;
+			*p_serial_comp << endl << "Motor conf error " << motornum << endl;
+			
 		*p_serial_slave << character_to_output;
 		input_character = p_serial_comp->getchar();		// Wait for response
 		if (input_character != '!')
@@ -337,7 +501,7 @@ void task_output::init_motor(unsigned char motornum)
 	}
 }
 
-void task_output::set_motor(unsigned char motornum, unsigned char setpoint)
+/*void task_output::p_motors->output(unsigned char motornum, unsigned char setpoint)
 {
 	if (motornum < 12)
 	{
@@ -355,164 +519,199 @@ void task_output::set_motor(unsigned char motornum, unsigned char setpoint)
 	else
 	
 	
-}
+}*/
 
 void task_output::open_thumb(void)
 {
-	set_motor(5,'a');
+	p_motors->output(5,'a');
 }
 
 void task_output::open_index(void)
 {
-	set_motor(1,'a');
+	p_motors->output(1,'a');
 }
 
 void task_output::open_middle(void)
 {
-	set_motor(2,'a');
+	p_motors->output(2,'a');
 }
 
 void task_output::open_ring(void)
 {
-	set_motor(3,'a');
+	p_motors->output(3,'a');
 }
 
 void task_output::open_pinky(void)
 {
-	set_motor(4,'a');
+	p_motors->output(4,'a');
 }
 
 void task_output::thumb_flat_up(void)
 {
-	set_motor(5,'a');
-	set_motor(6,'a');
-	set_motor(7,'a');
-	set_motor(8,'a');
+	p_motors->output(5,'a');
+	p_motors->output(6,'a');
+	p_motors->output(7,'a');
+	p_motors->output(8,'a');
 }
 
 void task_output::thumb_fold_up(void)
 {
-	set_motor(5,'e');
-	set_motor(6,'a');
-	set_motor(7,'a');
-	set_motor(8,'a');
+	p_motors->output(5,'e');
+	p_motors->output(6,'a');
+	p_motors->output(7,'a');
+	p_motors->output(8,'a');
 }
 
 void task_output::thumb_fold_in(void)
 {
-	set_motor(5,'c');
-	set_motor(6,'c');
-	set_motor(7,'e');
-	set_motor(8,'a');
+	p_motors->output(5,'c');
+	p_motors->output(6,'c');
+	p_motors->output(7,'e');
+	p_motors->output(8,'a');
 }
 
 void task_output::thumb_fold_out(void)
 {
-	set_motor(5,'e');
-	set_motor(6,'a');
-	set_motor(7,'b');
-	set_motor(8,'b');
+	p_motors->output(5,'e');
+	p_motors->output(6,'a');
+	p_motors->output(7,'b');
+	p_motors->output(8,'b');
 }
 
 void task_output::thumb_stretch(void)
 {
-	set_motor(5,'a');
-	set_motor(6,'e');
-	set_motor(7,'a');
-	set_motor(8,'a');
+	p_motors->output(5,'a');
+	p_motors->output(6,'e');
+	p_motors->output(7,'a');
+	p_motors->output(8,'a');
 }
 
 void task_output::thumb_curl(void)
 {
-	set_motor(5,'e');
-	set_motor(6,'b');
-	set_motor(7,'b');
-	set_motor(8,'b');
+	p_motors->output(5,'e');
+	p_motors->output(6,'b');
+	p_motors->output(7,'b');
+	p_motors->output(8,'b');
 }
 
 void task_output::index_stretch(void)
 {
-	set_motor(1,'a');
-	set_motor(9,'a');
+	p_motors->output(1,'a');
+	p_motors->output(9,'a');
 }
 
 void task_output::index_curl(void)
 {
-	set_motor(1,'c');
-	set_motor(9,'c');
+	p_motors->output(1,'c');
+	p_motors->output(9,'c');
 }
 
 void task_output::index_clench(void)
 {
-	
+	p_motors->output(1,'e');
+	p_motors->output(9,'e');
 }
 
 void task_output::index_vert_clench(void)
 {
-	
+	p_motors->output(1,'a');
+	p_motors->output(9,'e');
 }
 
 void task_output::index_cross(void)
 {
-	
+	p_motors->output(1,'c');
+	p_motors->output(9,'a');
+	p_motors->output(11,1);
 }
 
 void task_output::index_fold(void)
 {
-	
+	p_motors->output(1,'e');
+	p_motors->output(9,'a');
 }
 
 void task_output::middle_stretch(void)
 {
-	
+	p_motors->output(2,'a');
+	p_motors->output(10,'a');
 }
 
 void task_output::middle_curl(void)
 {
-	
+	p_motors->output(2,'c');
+	p_motors->output(10,'c');
 }
 
 void task_output::middle_clench(void)
 {
-	
+	p_motors->output(2,'e');
+	p_motors->output(10,'e');
 }
 
 void task_output::middle_vert_clench(void)
 {
-	
+	p_motors->output(2,'a');
+	p_motors->output(10,'e');
 }
 
 void task_output::middle_fold(void)
 {
-	
+	p_motors->output(2,'e');
+	p_motors->output(10,'a');
 }
 
 void task_output::ring_stretch(void)
 {
-	
+	p_motors->output(3,'a');
 }
 
 void task_output::ring_curl(void)
 {
-	
+	p_motors->output(3,'c');
 }
 
 void task_output::ring_clench(void)
 {
-	
+	p_motors->output(3,'e');
 }
 
 void task_output::pinky_stretch(void)
 {
-	
+	p_motors->output(4,'a');
 }
 
 void task_output::pinky_curl(void)
 {
-	
+	p_motors->output(4,'c');
 }
 
 void task_output::pinky_clench(void)
 {
-	
+	p_motors->output(4,'e');
 }
+
+void task_output::wrist_default(void)
+{
+	p_motors->output(12,0);
+	p_motors->output(13,0);
+}
+
+void task_output::wrist_bent(void)
+{
+	p_motors->output(12,90);
+	p_motors->output(13,0);
+}
+
+void task_output::wrist_bent_and_twisted(void)
+{
+	p_motors->output(12,90);
+	p_motors->output(13,90);
+}
+
+void task_output::wrist_twisted(void)
+{
+	p_motors->output(12,0);
+	p_motors->output(13,90);
+}
+

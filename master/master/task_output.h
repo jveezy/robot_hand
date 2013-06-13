@@ -28,7 +28,7 @@
 #define KEY_ENTER			0x0D
 #define KEY_BACKSPACE		0x08
 
-#define STRAIGHT			0
+/*#define STRAIGHT			0
 #define CURL				1
 #define CLENCH				2
 #define VERTICAL_CLENCH		3
@@ -40,7 +40,7 @@
 #define FOLD_FLAT			2
 #define FOLD_STRAIGHT_OUT	3
 #define FOLD_STRAIGHT_UP	4
-#define THUMB_CURL			5
+#define THUMB_CURL			5*/
 
 //-------------------------------------------------------------------------------------
 /** This class contains a task which moves a motorized lever back and forth. 
@@ -62,6 +62,14 @@ class task_output : public stl_task
 		unsigned char		finger_configuration[8];
 		unsigned char		output[14];
 		bool				flag_output_change;
+		unsigned char		input_character;
+		unsigned char		character_to_output;
+		bool				flag_interference_thumb;
+		bool				flag_interference_index;
+		bool				flag_interference_middle;
+		bool				flag_interference_ring;
+		bool				flag_interference_pinky;
+		unsigned char		character_step;
 
 	public:
 		// The constructor creates a new task object
@@ -73,6 +81,7 @@ class task_output : public stl_task
 		// Change Output Values
 		void change_output(unsigned char, unsigned char);
 
+		void set_new_character(unsigned char);
 		
 		void stop_motor (unsigned char);
 		void start_motor (unsigned char);
