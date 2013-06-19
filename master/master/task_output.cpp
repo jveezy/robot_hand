@@ -398,6 +398,103 @@ char task_output::run (char state)
 					break;
 				case('K'):
 				case('k'):
+					switch(character_step)
+					{
+						case(1):
+							thumb_flat_up();
+							index_stretch();
+							middle_stretch();
+							ring_clench();
+							pinky_clench();
+							wrist_default();
+							character_step++;
+							return(STL_NO_TRANSITION);
+						case(2):
+						thumb_fold_in();
+							flag_interference_thumb = true;
+							character_step = 1;
+							return(0);
+						default:
+							*p_serial_comp << endl << "Error character " << character_to_output << " step " << character_step << endl;
+					}
+					break;
+				case('L'):
+				case('l'):
+					thumb_stretch();
+					index_stretch();
+					middle_clench();
+					ring_clench();
+					pinky_clench();
+					wrist_default();
+					return(0);
+					break;
+				case('M'):
+				case('m'):
+					switch(character_step)
+					{
+						case(1):
+							thumb_fold_in();
+							index_stretch();
+							middle_stretch();
+							ring_stretch();
+							pinky_clench();
+							wrist_default();
+							character_step++;
+							return(STL_NO_TRANSITION);
+						case(2):
+							index_vert_clench();
+							middle_vert_clench();
+							ring_curl();
+							flag_interference_thumb = true;
+							flag_interference_index = true;
+							flag_interference_middle = true;
+							flag_interference_ring = true;
+							character_step = 1;
+							return(0);
+						default:
+							*p_serial_comp << endl << "Error character " << character_to_output << " step " << character_step << endl;
+					}
+					break;
+				case('N'):
+				case('n'):
+					switch(character_step)
+					{
+						case(1):
+							thumb_fold_in();
+							index_stretch();
+							middle_stretch();
+							ring_clench();
+							pinky_clench();
+							wrist_default();
+							character_step++;
+							return(STL_NO_TRANSITION);
+						case(2):
+							index_vert_clench();
+							middle_vert_clench();
+							flag_interference_thumb = true;
+							flag_interference_index = true;
+							flag_interference_middle = true;
+							character_step = 1;
+							return(0);
+						default:
+							*p_serial_comp << endl << "Error character " << character_to_output << " step " << character_step << endl;
+					}
+					break;
+				case('P'):
+				case('p'):
+					thumb_fold_up();
+					index_stretch();
+					middle_fold();
+					ring_clench();
+					pinky_clench();
+					wrist_bent();
+					flag_interference_thumb = true;
+					flag_interference_middle = true;
+					return(0);
+					break;
+				case('Q'):
+				case('q'):
+					
 					
 			}
 				
