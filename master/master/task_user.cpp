@@ -45,7 +45,7 @@
 
 task_user::task_user (task_timer& a_timer, time_stamp& t_stamp, base_text_serial* p_ser_comp, 
 					  base_text_serial* p_ser_slave, slave_picker* p_slave_picker, 
-					  character_database* p_char_dbase, task_output* p_output_task ) 
+					  task_output* p_output_task ) 
 	: stl_task (a_timer, t_stamp)
 {
 	flag_message_printed = false;	// Clear message_printed flag
@@ -54,7 +54,7 @@ task_user::task_user (task_timer& a_timer, time_stamp& t_stamp, base_text_serial
 	p_serial_comp = p_ser_comp;
 	p_serial_slave = p_ser_slave;
 	p_slave_chooser = p_slave_picker;
-	p_character_database = p_char_dbase;
+	//p_character_database = p_char_dbase;
 	p_task_output = p_output_task;
 	
 	character_buffer.flush();	// Flush character buffer
@@ -109,7 +109,7 @@ char task_user::run (char state)
 		case(1):
 				for(i_motor = 1; i_motor < 11; i_motor++)
 				{
-					stop_motor(i_motor);
+					p_task_output->stop_motor(i_motor);
 				}
 				*p_serial_comp << endl << "State 1: Motors Stopped" << endl;
 				return(0);	// return to state 0 (home screen)
@@ -284,7 +284,7 @@ char task_user::run (char state)
 								break;
 						}
 					}
-					return(6);															// Now go to state 6 to figure out timing
+					return(6);	// Now go to state 6 to figure out timing
 				}
 				else
 				{
@@ -330,53 +330,10 @@ char task_user::run (char state)
 				}
 				break;
 		// Retrieve and set gesture output values	
-/*		case(8):
-				// Pinky
-				output_configuration = p_character_database -> character_array[index].get_config(0,current_step);	// Retrieve from database
-				p_task_output -> change_output (0 , output_configuration);					// Send to output task
+		case(8):
+				p_task_output -> set_new_character(character_to_output);
 				
-				// Ring
-				output_configuration = p_character_database -> character_array[index].get_config(1,current_step);	// Retrieve from database
-				p_task_output -> change_output (1 , output_configuration);					// Send to output task
-				
-				// Middle
-				output_configuration = p_character_database -> character_array[index].get_config(2,current_step);	// Retrieve from database
-				p_task_output -> change_output (2 , output_configuration);					// Send to output task
-				
-				// Index
-				output_configuration = p_character_database -> character_array[index].get_config(3,current_step);	// Retrieve from database
-				p_task_output -> change_output (3 , output_configuration);					// Send to output task
-				
-				// Index spread
-				output_configuration = p_character_database -> character_array[index].get_config(4,current_step);	// Retrieve from database
-				p_task_output -> change_output (4 , output_configuration);					// Send to output task
-				
-				// Thumb
-				output_configuration = p_character_database -> character_array[index].get_config(5,current_step);	// Retrieve from database
-				p_task_output -> change_output (5 , output_configuration);					// Send to output task
-				
-				// Wrist extension/flexion
-				output_configuration = p_character_database -> character_array[index].get_config(6,current_step);	// Retrieve from database
-				p_task_output -> change_output (6 , output_configuration);					// Send to output task
-				
-				// Wrist supination/pronation
-				output_configuration = p_character_database -> character_array[index].get_config(7,current_step);	// Retrieve from database
-				p_task_output -> change_output (7 , output_configuration);					// Send to output task
-				
-				*p_serial_comp << ascii << endl << "Letter " << character_to_output << " step " << (current_step+0x30) << endl;
-				
-				current_step++;				// Increment step count now that this step is done.
-				
-				if(current_step == steps)	// If current step = step
-				{
-					return(5);	// All steps for this character are done. Go back to state 5 to get the next character.
-				}
-				else
-				{
-					return(7);	// If not. Go back to the delay state.
-				}
 				break;
-*/
 		// Done
 		case(9):
 				*p_serial_comp << endl << "Message done. Returning to message prompt." << endl;

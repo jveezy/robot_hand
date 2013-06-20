@@ -70,6 +70,7 @@ class task_output : public stl_task
 		bool				flag_interference_ring;
 		bool				flag_interference_pinky;
 		unsigned char		character_step;
+		unsigned char		i;
 
 	public:
 		// The constructor creates a new task object
@@ -87,7 +88,50 @@ class task_output : public stl_task
 		void start_motor (unsigned char);
 		bool query_motor (unsigned char);
 		void init_motor (unsigned char);
-		void set_motor (unsigned char);
+		//void set_motor (unsigned char);
+		
+		void open_thumb(void);
+		void open_index(void);
+		void open_middle(void);
+		void open_ring(void);
+		void open_pinky(void);
+		
+		void thumb_flat_up(void);
+		void thumb_fold_up(void);
+		void thumb_fold_in(void);
+		void thumb_fold_out(void);
+		void thumb_stretch(void);
+		void thumb_curl(void);
+		
+		void index_stretch(void);
+		void index_curl(void);
+		void index_clench(void);
+		void index_vert_clench(void);
+		void index_cross(void);
+		void index_u(void);
+		void index_fold(void);
+		
+		void middle_stretch(void);
+		void middle_curl(void);
+		void middle_clench(void);
+		void middle_vert_clench(void);
+		void middle_fold(void);
+		
+		void ring_stretch(void);
+		void ring_curl(void);
+		void ring_clench(void);
+		
+		void pinky_stretch(void);
+		void pinky_curl(void);
+		void pinky_clench(void);
+		
+		void wrist_default(void);
+		void wrist_bent(void);
+		void wrist_bent_and_twisted(void);
+		void wrist_twisted(void);
+		void wrist_z1(void);
+		void wrist_z2(void);
+		void wrist_z3(void);
 };
 
 #endif

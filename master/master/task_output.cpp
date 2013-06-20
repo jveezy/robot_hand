@@ -51,14 +51,20 @@ task_output::task_output (task_timer& a_timer, time_stamp& t_stamp, base_text_se
 	p_slave_chooser = p_slave_picker;
 	p_motors = p_the_motors;
 	
-	for(unsigned char i = 0; i < 8; i++)
+	for (i = 0; i < 8; i++)
 	{
 		finger_configuration[i] = 0;
 	}
 	
-	for(unsigned char i = 1; i < 14; i++)
+	for (i = 1; i < 14; i++)
 	{
 		output[i] = 0;
+	}
+	
+	// Initialize all motors
+	for (i = 1; i < 11; i++)
+	{
+		init_motor(i);
 	}
 	
 	// Initialize variables
@@ -494,8 +500,153 @@ char task_output::run (char state)
 					break;
 				case('Q'):
 				case('q'):
-					
-					
+					thumb_fold_out();
+					index_fold();
+					middle_clench();
+					ring_clench();
+					pinky_clench();
+					wrist_bent();
+					return(0);
+					break;
+				case('R'):
+				case('r'):
+					thumb_flat_up();
+					index_cross();
+					middle_clench();
+					ring_clench();
+					pinky_clench();
+					wrist_default();
+					flag_interference_index = true;
+					return(0);
+					break;
+				case('S'):
+				case('s'):
+					switch(character_step)
+					{
+						case(1):
+							thumb_fold_out();
+							index_clench();
+							middle_clench();
+							ring_clench();
+							pinky_clench();
+							wrist_default();
+							character_step++;
+							return(STL_NO_TRANSITION);
+						case(2):
+							thumb_fold_in();
+							flag_interference_thumb = true;
+							character_step = 1;
+							return(0);
+						default:
+							*p_serial_comp << endl << "Error character " << character_to_output << " step " << character_step << endl;
+					}
+					break;
+				case('T'):
+				case('t'):
+					switch(character_step)
+					{
+						case(1):
+							thumb_flat_up();
+							index_vert_clench();
+							middle_clench();
+							ring_clench();
+							pinky_clench();
+							wrist_default();
+							character_step++;
+							return(STL_NO_TRANSITION);
+						case(2):
+							thumb_fold_in();
+							flag_interference_thumb = true;
+							flag_interference_index = true;
+							character_step = 1;
+							return(0);
+						default:
+							*p_serial_comp << endl << "Error character " << character_to_output << " step " << character_step << endl;
+					}
+					break;
+				case('U'):
+				case('u'):
+					switch(character_step)
+					{
+						case(1):
+							thumb_flat_up();
+							index_stretch();
+							middle_stretch();
+							ring_clench();
+							pinky_clench();
+							wrist_default();
+							character_step++;
+							return(STL_NO_TRANSITION);
+						case(2):
+							index_u();
+							flag_interference_thumb = true;
+							flag_interference_index = true;
+							character_step = 1;
+							return(0);
+						default:
+							*p_serial_comp << endl << "Error character " << character_to_output << " step " << character_step << endl;
+					}
+					break;
+				case('X'):
+				case('x'):
+					switch(character_step)
+					{
+						case(1):
+							thumb_fold_out();
+							index_stretch();
+							middle_clench();
+							ring_clench();
+							pinky_clench();
+							wrist_default();
+							character_step++;
+							return(STL_NO_TRANSITION);
+						case(2):
+							thumb_fold_in();
+							index_vert_clench();
+							flag_interference_thumb = true;
+							flag_interference_index = true;
+							character_step = 1;
+							return(0);
+						default:
+							*p_serial_comp << endl << "Error character " << character_to_output << " step " << character_step << endl;
+					}
+				case('Y'):
+				case('y'):
+					thumb_stretch();
+					index_clench();
+					middle_clench();
+					ring_clench();
+					pinky_stretch();
+					wrist_default();
+					break;
+				case('Z'):
+				case('z'):
+					switch(character_step)
+					{
+						case(1):
+							thumb_flat_up();
+							index_clench();
+							middle_clench();
+							ring_clench();
+							pinky_stretch();
+							wrist_z1();
+							character_step++;
+							return(STL_NO_TRANSITION);
+						case(2):
+							wrist_z2();
+							character_step++;
+							return(STL_NO_TRANSITION);
+						case(3):
+							wrist_z3();
+							character_step++;
+							return(STL_NO_TRANSITION);
+						case(4):
+							wrist_bent();
+							character_step = 1;
+							return(0);
+						default:
+							*p_serial_comp << endl << "Error character " << character_to_output << " step " << character_step << endl;
+					}
 			}
 				
 			return(0);	// Go to state 2 (output) when done
@@ -626,6 +777,7 @@ void task_output::open_thumb(void)
 void task_output::open_index(void)
 {
 	p_motors->output(1,'a');
+	p_motors->output(11,0);
 }
 
 void task_output::open_middle(void)
@@ -722,6 +874,13 @@ void task_output::index_cross(void)
 	p_motors->output(11,1);
 }
 
+void task_output::index_u(void)
+{
+	p_motors->output(1,'a');
+	p_motors->output(9,'a');
+	p_motors->output(11,1);
+}
+
 void task_output::index_fold(void)
 {
 	p_motors->output(1,'e');
@@ -811,4 +970,23 @@ void task_output::wrist_twisted(void)
 	p_motors->output(12,0);
 	p_motors->output(13,90);
 }
+
+void task_output::wrist_z1(void)
+{
+	p_motors->output(12,45);
+	p_motors->output(13,45);
+}
+
+void task_output::wrist_z2(void)
+{
+	p_motors->output(12,45);
+	p_motors->output(13,0);
+}
+
+void task_output::wrist_z3(void)
+{
+	p_motors->output(12,90);
+	p_motors->output(13,45);
+}
+
 

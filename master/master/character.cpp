@@ -125,5 +125,5 @@ unsigned char character::get_config(unsigned char finger, unsigned char step)
 			return(wrist_bottom[step]);
 			break;
 	}
-}
+};
 

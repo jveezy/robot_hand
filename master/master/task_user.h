@@ -65,7 +65,7 @@ class task_user : public stl_task
 
 	public:
 		// The constructor creates a new task object
-		task_user (task_timer&, time_stamp&, base_text_serial*, base_text_serial*, slave_picker*, character_database*, task_output*);
+		task_user (task_timer&, time_stamp&, base_text_serial*, base_text_serial*, slave_picker*, task_output*);
 
 		// The run method is where the task actually performs its function
 		char run (char);

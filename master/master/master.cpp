@@ -86,7 +86,7 @@ int main ()
 			interval_time.set_time (0, 25000);
 
 			// Create a task to read commands from the keyboard
-			task_user user_task (the_timer, interval_time, &sport_comp, &sport_slave, &the_slave_picker, &char_dbase, &output_task);
+			task_user user_task (the_timer, interval_time, &sport_comp, &sport_slave, &the_slave_picker, &output_task);
 			
 			// Turn on interrupt processing so the timer can work
 			sei ();
