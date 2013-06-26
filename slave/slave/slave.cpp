@@ -52,6 +52,7 @@
 
 	// Encoder Reading
 	unsigned short int	count = 1;			// Encoder count
+	unsigned char		count_8bit = 1;		// Top 8 bits of the 10 bit encoder count
 	unsigned char		current_reading = 0;	// Current encoder quadrature reading
 	unsigned char		previous_reading = 0;	// Last encoder quadrature reading
 	unsigned char		errors = 0;			// Number of encoder errors
@@ -246,6 +247,9 @@
 						motor_number = 10;
 						state_data = 3;
 						break;
+					case('E'):	// Encoder Query
+						state_data = 4;
+						break;
 					default:
 						state_data = 1;	// Return to state 1 if character is unclear
 						break;
@@ -268,6 +272,10 @@
 				sport.send('!');
 				
 				state_data = 1;
+				break;
+			case(4):		// Respond to Encoder Query
+				count_8bit = (unsigned char) (count << 2);
+				sport.send(count_8bit);
 				break;
 			case(5):		// Calibrate
 				if (!flag_calibrate)	// If the calibration flag has been turned off

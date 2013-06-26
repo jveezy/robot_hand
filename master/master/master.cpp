@@ -45,10 +45,6 @@
 int main ()
 {
 	volatile unsigned int dummy = 0;		// Delay loop kind of counter
-	char time_string[16];					// Character buffer holds printable time
-	char input_char;						// A character typed by the user
-	unsigned char motor_duty = 0;			// Duty cycle to send to motor
-	bool going_clockwise = true;			// Which way is the motor going? 
 
 	// Create objects
 

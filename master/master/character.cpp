@@ -124,6 +124,10 @@ unsigned char character::get_config(unsigned char finger, unsigned char step)
 		case(7):	// Wrist Bottom
 			return(wrist_bottom[step]);
 			break;
+		default:
+			return(0);
+			break;
 	}
+	return(0);
 };
 

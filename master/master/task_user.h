@@ -52,6 +52,7 @@ class task_user : public stl_task
 		unsigned char		output_delay;			///< Number of times to skip displaying a character
 		unsigned char		current_delay;			///< Remaining number of delay counts
 		unsigned char		output_configuration;	///< Finger configuration to output to output task
+		unsigned char		encoder_reading;		///< Encoder reading retrieved from motor
 		
 		bool				flag_period;			///< Flag to indicate a period character
 		bool				flag_comma;				///< Flag to indicate a comma character
