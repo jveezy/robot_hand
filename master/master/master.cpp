@@ -29,7 +29,7 @@
 #include "character_database.h"				// The class that stores all character info
 #include "lib/rs232int.h"					// Serial port header
 #include "lib/global_debug.h"				// Header for serial debugging port
-#include "motor.h"							// Class containing all motors
+//#include "motor.h"							// Class containing all motors
 #include "lib/stl_timer.h"					// Microsecond-resolution timer
 #include "lib/stl_task.h"					// Base class for all task classes
 #include "task_output.h"					// The task that outputs all commands to the motor controllers
@@ -55,7 +55,7 @@ int main ()
 			set_glob_debug_port (&sport_comp);
 
 			// Create a slave picker
-			slave_picker the_slave_picker;
+			slave_picker the_slave_picker(&sport_comp);
 			
 			// Create a character database
 			character_database char_dbase;
@@ -63,7 +63,7 @@ int main ()
 			// Servos and motor databases
 			servo servo_top(1);
 			servo servo_bottom(2);
-			motor the_motors (&sport_slave,&the_slave_picker,&servo_top,&servo_bottom);
+			//motor the_motors (&sport_slave,&the_slave_picker,&servo_top,&servo_bottom,&sport_comp);
 
 			// Create a microsecond-resolution timer
 			task_timer the_timer;
@@ -76,7 +76,7 @@ int main ()
 
 			// Set the interval to 20ms
 			interval_time.set_time (0, 10000);
-			task_output output_task (the_timer, interval_time, &sport_comp, &sport_slave, &the_slave_picker, &the_motors);
+			task_output output_task (the_timer, interval_time, &sport_comp, &sport_slave, &the_slave_picker,&servo_top,&servo_bottom);
 
 			// Set the interval a bit slower for the user interface task
 			interval_time.set_time (0, 25000);
@@ -85,6 +85,8 @@ int main ()
 			task_user user_task (the_timer, interval_time, &sport_comp, &sport_slave, &the_slave_picker, &output_task);
 			
 			// Turn on interrupt processing so the timer can work
+//			DDRA = 0xFF;	// Set all pins in register A to be outputs
+//			PORTA |= (1 << PINA0);
 			sei ();
 
 	// Run the main scheduling loop, in which the tasks are continuously scheduled.

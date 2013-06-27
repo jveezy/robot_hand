@@ -34,15 +34,21 @@
 
 class motor
 {
+	protected:
+	
+		unsigned char motornum;
+		unsigned char output_value;
+	
 	public:
 		
 		slave_picker* p_slave_chooser;
 		base_text_serial* p_serial_slave;
+		base_text_serial* p_serial_comp;
 		servo* p_servo_top;
 		servo* p_servo_bottom;
 		
 		// The constructor creates a new task object
-		motor (base_text_serial*, slave_picker*, servo*, servo*);
+		motor (base_text_serial*, slave_picker*, servo*, servo*, base_text_serial*);
 
 		// The run method is where the task actually performs its function
 		void output (unsigned char, unsigned char);

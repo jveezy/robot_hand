@@ -61,6 +61,8 @@ task_user::task_user (task_timer& a_timer, time_stamp& t_stamp, base_text_serial
 	
 	backspace = 0x08;			// Backspace character for printing
 	
+	*p_serial_comp << endl << "User task initialized" << endl;
+	
 }
 
 //-------------------------------------------------------------------------------------
@@ -80,11 +82,16 @@ char task_user::run (char state)
 			if(!flag_message_printed)
 			{
 				*p_serial_comp << endl << endl << "Robotic Fingerspelling Hand" << endl << endl;
-				*p_serial_comp << endl << "ESC Stop Motors" << endl << "C   Calibrate" << endl << "ENT Enter Sentence" << endl;
+				*p_serial_comp <<	endl << "ESC Stop Motors" << 
+									endl << "C   Calibrate" << 
+									endl << "ENT Enter Sentence" << 
+									endl << "E   Encoder Query" << 
+									endl << "M   Manual Mode" << endl ;
 				flag_message_printed = true;
 			}
 			if(p_serial_comp->check_for_char())
 			{
+				*p_serial_comp << endl << "Character received!" << endl;
 				flag_message_printed = false;
 				input_character = p_serial_comp->getchar();
 				switch(input_character)
@@ -99,10 +106,20 @@ char task_user::run (char state)
 					case(0x0D):		// Enter
 						return(4);	// Go to state 4 (enter sentence)
 						break;
+					case('E'):
+					case('e'):
+						return(10);	// Go to state 10 (Encoder query)
+						break;
+					case('M'):
+					case('m'):
+						return(12);	// Go to state 12 (Manual mode)
+						break;
 					default:
+						*p_serial_comp << endl << "Invalid command" << endl;
 						break;
 				}
 			}
+			//*p_serial_comp << endl << "User task state 0" << endl;
 			return(STL_NO_TRANSITION);
 			break;
 		// Stop motors
@@ -130,7 +147,7 @@ char task_user::run (char state)
 				if( (input_character >= 0x31) && (input_character <= 0x39) )
 				{
 					// Subtract 0x30 from input character to get decimal value
-					input_character = input_character - 0x31;
+					input_character = input_character - 0x30;
 						
 					// Set multiplexer to the proper pin
 					p_slave_chooser->choose(input_character);
@@ -262,8 +279,7 @@ char task_user::run (char state)
 				// If it's not a pause character, collect information.
 				if ((character_to_output != '.')||(character_to_output != ',')||(character_to_output != ' '))
 				{
-					index = p_character_database -> get_index(character_to_output);		// Locate the character in the array
-					steps = p_character_database -> character_array[index].get_steps();	// Get the number of steps from the character database
+					*p_serial_comp << endl << "Collecting info for " << ascii << character_to_output << dec << endl;
 				}
 					
 				// If it's a pause character, set the proper flag.
@@ -310,7 +326,7 @@ char task_user::run (char state)
 			}
 			else
 			{
-				output_delay = 40 / steps;
+				output_delay = 20;
 			}
 			current_delay = 0;
 			current_step = 0;
@@ -332,7 +348,7 @@ char task_user::run (char state)
 		// Retrieve and set gesture output values	
 		case(8):
 			p_task_output -> set_new_character(character_to_output);
-			return(4);	// Return to message prompt
+			return(5);	// Return to message prompt
 			break;
 		// Done
 		case(9):
@@ -355,7 +371,7 @@ char task_user::run (char state)
 				if( (input_character >= 0x31) && (input_character <= 0x39) )
 				{
 					// Subtract 0x30 from input character to get decimal value
-					input_character = input_character - 0x31;
+					input_character = input_character - 0x30;
 					
 					// Set multiplexer to the proper pin
 					p_slave_chooser->choose(input_character);
@@ -410,7 +426,7 @@ char task_user::run (char state)
 				if( (input_character >= 0x31) && (input_character <= 0x39) )
 				{
 					// Subtract 0x30 from input character to get decimal value
-					input_character = input_character - 0x31;
+					input_character = input_character - 0x30;
 					
 					// Set multiplexer to the proper pin
 					p_slave_chooser->choose(input_character);
@@ -429,10 +445,14 @@ char task_user::run (char state)
 					*p_serial_comp << endl << "Invalid character" << endl;
 					return(12);		// Go back to state 10 (encoder prompt)
 				}
-
-				// Command Prompt
 				*p_serial_comp << endl << "Input command. ESC to exit." << endl;
-				
+				return(14);
+			}
+			break;
+		case(14):
+			// Command Prompt
+			if(p_serial_comp->check_for_char())
+			{	
 				input_character = p_serial_comp ->getchar();
 				
 				if (input_character != 0x1B)
@@ -440,16 +460,16 @@ char task_user::run (char state)
 					if(p_serial_slave->ready_to_send())
 					{
 						*p_serial_slave << input_character;
+						*p_serial_comp << endl << "Sent " << ascii << input_character << dec << " to motor." << endl;
 					}
 				}
 				else
 				{
 					return(12);	// Return to motor list if ESC pressed
 				}
-
-				*p_serial_comp << endl << "Encoder reading: " << dec << encoder_reading << ascii << endl;
-				return(12);		// Go back to state 10 (encoder prompt)
+				return(STL_NO_TRANSITION);		// Stay here unless ESC pressed
 			}
+			return(STL_NO_TRANSITION);
 			break;
 		default:
 			break;

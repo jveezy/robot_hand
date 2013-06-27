@@ -16,6 +16,8 @@
  */
 //*************************************************************************************
 
+#include "lib/base_text_serial.h"
+
 #ifndef _SLAVE_PICKER_H_
 #define _SLAVE_PICKER_H_
 
@@ -30,10 +32,11 @@ class slave_picker
 {
 	protected:
 		unsigned char pinarray[4];	// Create pin array
+		base_text_serial* 	p_serial_comp;			///< Pointer to serial device for computer
 
 	public:
 		// The constructor creates a new task object
-		slave_picker (void);
+		slave_picker (base_text_serial*);
 
 		// The run method is where the task actually performs its function
 		void choose (unsigned char);

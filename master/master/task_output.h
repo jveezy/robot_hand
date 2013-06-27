@@ -16,31 +16,17 @@
  */
 //*************************************************************************************
 
-#include "motor.h"
+//#include "motor.h"
+#include "servo.h"
 
 #ifndef	_TASK_OUTPUT_H_
 #define	_TASK_OUTPUT_H_
 
 #define MAX_SENTENCE_SIZE	255
 
-
 #define KEY_ESCAPE			0x1B
 #define KEY_ENTER			0x0D
 #define KEY_BACKSPACE		0x08
-
-/*#define STRAIGHT			0
-#define CURL				1
-#define CLENCH				2
-#define VERTICAL_CLENCH		3
-#define HORIZONTAL_STRAIGHT	4
-#define SLANTED_STRAIGHT	5
-
-#define FLAT_SIDE			0
-#define	OUT_SIDE			1
-#define FOLD_FLAT			2
-#define FOLD_STRAIGHT_OUT	3
-#define FOLD_STRAIGHT_UP	4
-#define THUMB_CURL			5*/
 
 //-------------------------------------------------------------------------------------
 /** This class contains a task which moves a motorized lever back and forth. 
@@ -56,7 +42,9 @@ class task_output : public stl_task
 		base_text_serial* 	p_serial_comp;			///< Pointer to serial device for computer
 		base_text_serial* 	p_serial_slave;			///< Pointer to serial device for slave
 		slave_picker* 		p_slave_chooser;		///< Pointer to slave picker for mux pins
-		motor*				p_motors;				///< Pointer to all the motors
+		//motor*				p_motors;			///< Pointer to all the motors
+		servo*				p_servo_top;			///< Pointer to the top servo
+		servo*				p_servo_bottom;			///< Pointer to the bottom servo
 		                                                                               
 		
 		unsigned char		finger_configuration[8];
@@ -69,12 +57,13 @@ class task_output : public stl_task
 		bool				flag_interference_middle;
 		bool				flag_interference_ring;
 		bool				flag_interference_pinky;
+		bool				flag_motors_enabled;
 		unsigned char		character_step;
 		unsigned char		i;
 
 	public:
 		// The constructor creates a new task object
-		task_output (task_timer&, time_stamp&, base_text_serial*, base_text_serial*, slave_picker*, motor*);
+		task_output (task_timer&, time_stamp&, base_text_serial*, base_text_serial*, slave_picker*, servo*, servo*);
 
 		// The run method is where the task actually performs its function
 		char run (char);
@@ -89,6 +78,7 @@ class task_output : public stl_task
 		bool query_motor (unsigned char);
 		void init_motor (unsigned char);
 		//void set_motor (unsigned char);
+		void output_to_motor(unsigned char, unsigned char);
 		
 		void open_thumb(void);
 		void open_index(void);

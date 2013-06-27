@@ -27,8 +27,11 @@
  *  slave chips.
  */
 
-slave_picker::slave_picker (void)
+slave_picker::slave_picker (base_text_serial* p_ser_comp)
 {
+	// Assign pointers
+	p_serial_comp = p_ser_comp;
+	
 	// Clear array
 	for(unsigned char i = 0; i < 4; i++)
 	{
@@ -48,7 +51,7 @@ slave_picker::slave_picker (void)
 
 void slave_picker::choose (unsigned char pinnumber)
 {
-	GLOB_DEBUG (pinnumber);
+	*p_serial_comp << endl << "Motor " << pinnumber;
 	
 	// Split number into individual bits
 	for(unsigned char i = 0; i < 4; i++)

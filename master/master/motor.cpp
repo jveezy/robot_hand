@@ -30,10 +30,11 @@
  *  slave chips.
  */
 
-motor::motor (base_text_serial* p_serialport_slave, slave_picker* p_slave_picker, servo* p_servotop, servo* p_servobottom)
+motor::motor (base_text_serial* p_serialport_slave, slave_picker* p_slave_picker, servo* p_servotop, servo* p_servobottom,base_text_serial* p_serialport_comp)
 {
 	p_slave_chooser = p_slave_picker;
 	p_serial_slave = p_serialport_slave;
+	p_serial_comp = p_serialport_comp;
 	p_servo_top = p_servotop;
 	p_servo_bottom = p_servobottom;
 	
@@ -49,14 +50,18 @@ motor::motor (base_text_serial* p_serialport_slave, slave_picker* p_slave_picker
  *  @return Nothing
  */
 
-void motor::output (unsigned char motornumber, unsigned char output_value)
+void motor::output (unsigned char motornumber, unsigned char charout)
 {
-	if (motornumber <= 10)
+	motornum = motornumber;
+	*p_serial_comp << "Select motor " << ascii << motornum << dec << endl;
+	output_value = charout;
+	
+	if (motornum <= 10)
 	{
-		p_slave_chooser->choose(motornumber-1);
+		p_slave_chooser->choose(motornum);
 		*p_serial_slave << output_value;
 	}
-	else if (motornumber == 11)
+	else if (motornum == 11)
 	{
 		if(output_value == 1)
 		{
@@ -67,11 +72,11 @@ void motor::output (unsigned char motornumber, unsigned char output_value)
 			MOTOR_SWITCH_PORT &= ~(1 << MOTOR_SWITCH_PIN);
 		}
 	}
-	else if (motornumber == 12)
+	else if (motornum == 12)
 	{
 		p_servo_top->output(output_value);
 	}
-	else if (motornumber == 13)
+	else if (motornum == 13)
 	{
 		p_servo_bottom->output(output_value);
 	}
