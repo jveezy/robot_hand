@@ -24,7 +24,7 @@
 #include "lib/stl_task.h"
 #include "servo.h"
 #include "slave_picker.h"			// The class that sets the multiplexer pins
-#include "motor.h"
+//#include "motor.h"
 #include "task_output.h"
 #include "lib/global_debug.h"
 
@@ -96,6 +96,7 @@ char task_output::run (char state)
 	{
 		// Wait for output change
 		case(0):
+			flag_ready_to_output = true;
 			//*p_serial_comp << endl << "Output task state 0." << endl;		
 			if(flag_output_change)
 			{
@@ -105,6 +106,7 @@ char task_output::run (char state)
 			break;
 		// Check for interferences		
 		case(1):
+			flag_ready_to_output = false;
 			if(flag_interference_thumb)
 			{
 				open_thumb();
@@ -136,6 +138,7 @@ char task_output::run (char state)
 		case(2):	
 			if (!flag_motors_enabled)
 			{
+				*p_serial_comp << endl << "Initializing motors" << endl;
 				// Initialize all motors
 				for (i = 1; i < 11; i++)
 				{
@@ -685,16 +688,10 @@ char task_output::run (char state)
 	return (STL_NO_TRANSITION);
 }
 
-void task_output::change_output(unsigned char finger, unsigned char configuration)
-{
-	finger_configuration[finger] = configuration;
-	flag_output_change = true;
-}
-
 void task_output::set_new_character(unsigned char outchar)
 {
 	character_to_output = outchar;
-	*p_serial_comp << endl << "New output character: " << ascii << character_to_output << dec << endl;
+	*p_serial_comp << endl << "New output character: " << ascii << character_to_output << numeric << endl;
 	flag_output_change = true;
 }
 
@@ -710,6 +707,8 @@ void task_output::stop_motor(unsigned char motornum)
 			*p_serial_comp << endl << "Motor stop error " << motornum << endl;
 		}*/
 	}
+	
+	flag_motors_enabled = false;
 }
 
 void task_output::start_motor(unsigned char motornum)
@@ -794,17 +793,17 @@ void task_output::init_motor(unsigned char motornum)
 	
 }*/
 
-void task_output::output_to_motor (unsigned char motornum, unsigned char output_value)
+void task_output::output_to_motor (unsigned char motornumber, unsigned char output_value)
 {
+	//*p_serial_comp << "Select motor " << numeric << motornumber << endl;
 	
-	*p_serial_comp << "Select motor " << ascii << motornum << dec << endl;
-	
-	if (motornum <= 10)
+	if (motornumber <= 10 && motornumber >= 0)
 	{
-		p_slave_chooser->choose(motornum);
+		p_slave_chooser->choose(motornumber);
 		*p_serial_slave << output_value;
+		*p_serial_comp << ascii << output_value << numeric;
 	}
-	else if (motornum == 11)
+	else if (motornumber == 11)
 	{
 		if(output_value == 1)
 		{
@@ -815,50 +814,59 @@ void task_output::output_to_motor (unsigned char motornum, unsigned char output_
 			MOTOR_SWITCH_PORT &= ~(1 << MOTOR_SWITCH_PIN);
 		}
 	}
-	else if (motornum == 12)
+	else if (motornumber == 12)
 	{
 		p_servo_top->output(output_value);
 	}
-	else if (motornum == 13)
+	else if (motornumber == 13)
 	{
 		p_servo_bottom->output(output_value);
 	}
+	else
+	{
+		*p_serial_comp << "Motor number outside bounds" << endl;
+	}
+}
+
+bool task_output::ready_to_output(void)
+{
+	return (flag_ready_to_output);
 }
 
 void task_output::open_thumb(void)
 {
-	*p_serial_comp << "thumb";
+	*p_serial_comp << endl << "thumb" << endl;
 	output_to_motor(5,'a');
 }
 
 void task_output::open_index(void)
 {
-	*p_serial_comp << "index";
+	*p_serial_comp << endl << "index" << endl;
 	output_to_motor(1,'a');
 	output_to_motor(11,0);
 }
 
 void task_output::open_middle(void)
 {
-	*p_serial_comp << "middle";
+	*p_serial_comp << endl << "middle" << endl;
 	output_to_motor(2,'a');
 }
 
 void task_output::open_ring(void)
 {
-	*p_serial_comp << "ring";
+	*p_serial_comp << endl << "ring" << endl;
 	output_to_motor(3,'a');
 }
 
 void task_output::open_pinky(void)
 {
-	*p_serial_comp << "pinky";
+	*p_serial_comp << endl << "pinky" << endl;
 	output_to_motor(4,'a');
 }
 
 void task_output::thumb_flat_up(void)
 {
-	*p_serial_comp << "thumb";
+	*p_serial_comp << endl << "thumb" << endl;
 	output_to_motor(5,'a');
 	output_to_motor(6,'a');
 	output_to_motor(7,'a');
@@ -867,7 +875,7 @@ void task_output::thumb_flat_up(void)
 
 void task_output::thumb_fold_up(void)
 {
-	*p_serial_comp << "thumb";
+	*p_serial_comp << endl << "thumb" << endl;
 	output_to_motor(5,'e');
 	output_to_motor(6,'a');
 	output_to_motor(7,'a');
@@ -876,7 +884,7 @@ void task_output::thumb_fold_up(void)
 
 void task_output::thumb_fold_in(void)
 {
-	*p_serial_comp << "thumb";
+	*p_serial_comp << endl << "thumb" << endl;
 	output_to_motor(5,'c');
 	output_to_motor(6,'c');
 	output_to_motor(7,'e');
@@ -885,7 +893,7 @@ void task_output::thumb_fold_in(void)
 
 void task_output::thumb_fold_out(void)
 {
-	*p_serial_comp << "thumb";
+	*p_serial_comp << endl << "thumb" << endl;
 	output_to_motor(5,'e');
 	output_to_motor(6,'a');
 	output_to_motor(7,'b');
@@ -894,7 +902,7 @@ void task_output::thumb_fold_out(void)
 
 void task_output::thumb_stretch(void)
 {
-	*p_serial_comp << "thumb";
+	*p_serial_comp << endl << "thumb" << endl;
 	output_to_motor(5,'a');
 	output_to_motor(6,'e');
 	output_to_motor(7,'a');
@@ -903,7 +911,7 @@ void task_output::thumb_stretch(void)
 
 void task_output::thumb_curl(void)
 {
-	*p_serial_comp << "thumb";
+	*p_serial_comp << endl << "thumb" << endl;
 	output_to_motor(5,'e');
 	output_to_motor(6,'b');
 	output_to_motor(7,'b');
@@ -912,35 +920,35 @@ void task_output::thumb_curl(void)
 
 void task_output::index_stretch(void)
 {
-	*p_serial_comp << "index";
+	*p_serial_comp << endl << "index" << endl;
 	output_to_motor(1,'a');
 	output_to_motor(9,'a');
 }
 
 void task_output::index_curl(void)
 {
-	*p_serial_comp << "index";
+	*p_serial_comp << endl << "index" << endl;
 	output_to_motor(1,'c');
 	output_to_motor(9,'c');
 }
 
 void task_output::index_clench(void)
 {
-	*p_serial_comp << "index";
+	*p_serial_comp << endl << "index" << endl;
 	output_to_motor(1,'e');
 	output_to_motor(9,'e');
 }
 
 void task_output::index_vert_clench(void)
 {
-	*p_serial_comp << "index";
+	*p_serial_comp << endl << "index" << endl;
 	output_to_motor(1,'a');
 	output_to_motor(9,'e');
 }
 
 void task_output::index_cross(void)
 {
-	*p_serial_comp << "index";
+	*p_serial_comp << endl << "index" << endl;
 	output_to_motor(1,'c');
 	output_to_motor(9,'a');
 	output_to_motor(11,1);
@@ -948,7 +956,7 @@ void task_output::index_cross(void)
 
 void task_output::index_u(void)
 {
-	*p_serial_comp << "index";
+	*p_serial_comp << endl << "index" << endl;
 	output_to_motor(1,'a');
 	output_to_motor(9,'a');
 	output_to_motor(11,1);
@@ -956,127 +964,127 @@ void task_output::index_u(void)
 
 void task_output::index_fold(void)
 {
-	*p_serial_comp << "index";
+	*p_serial_comp << endl << "index" << endl;
 	output_to_motor(1,'e');
 	output_to_motor(9,'a');
 }
 
 void task_output::middle_stretch(void)
 {
-	*p_serial_comp << "middle";
+	*p_serial_comp << endl << "middle" << endl;
 	output_to_motor(2,'a');
 	output_to_motor(10,'a');
 }
 
 void task_output::middle_curl(void)
 {
-	*p_serial_comp << "middle";
+	*p_serial_comp << endl << "middle" << endl;
 	output_to_motor(2,'c');
 	output_to_motor(10,'c');
 }
 
 void task_output::middle_clench(void)
 {
-	*p_serial_comp << "middle";
+	*p_serial_comp << endl << "middle" << endl;
 	output_to_motor(2,'e');
 	output_to_motor(10,'e');
 }
 
 void task_output::middle_vert_clench(void)
 {
-	*p_serial_comp << "middle";
+	*p_serial_comp << endl << "middle" << endl;
 	output_to_motor(2,'a');
 	output_to_motor(10,'e');
 }
 
 void task_output::middle_fold(void)
 {
-	*p_serial_comp << "middle";
+	*p_serial_comp << endl << "middle" << endl;
 	output_to_motor(2,'e');
 	output_to_motor(10,'a');
 }
 
 void task_output::ring_stretch(void)
 {
-	*p_serial_comp << "ring";
+	*p_serial_comp << endl << "ring" << endl;
 	output_to_motor(3,'a');
 }
 
 void task_output::ring_curl(void)
 {
-	*p_serial_comp << "ring";
+	*p_serial_comp << endl << "ring" << endl;
 	output_to_motor(3,'c');
 }
 
 void task_output::ring_clench(void)
 {
-	*p_serial_comp << "ring";
+	*p_serial_comp << endl << "ring" << endl;
 	output_to_motor(3,'e');
 }
 
 void task_output::pinky_stretch(void)
 {
-	*p_serial_comp << "pinky";
+	*p_serial_comp << endl << "pinky" << endl;
 	output_to_motor(4,'a');
 }
 
 void task_output::pinky_curl(void)
 {
-	*p_serial_comp << "pinky";
+	*p_serial_comp << endl << "pinky" << endl;
 	output_to_motor(4,'c');
 }
 
 void task_output::pinky_clench(void)
 {
-	*p_serial_comp << "pinky";
+	*p_serial_comp << endl << "pinky" << endl;
 	output_to_motor(4,'e');
 }
 
 void task_output::wrist_default(void)
 {
-	*p_serial_comp << "wrist";
+	*p_serial_comp << endl << "wrist" << endl;
 	output_to_motor(12,0);
 	output_to_motor(13,0);
 }
 
 void task_output::wrist_bent(void)
 {
-	*p_serial_comp << "wrist";
+	*p_serial_comp << endl << "wrist" << endl;
 	output_to_motor(12,90);
 	output_to_motor(13,0);
 }
 
 void task_output::wrist_bent_and_twisted(void)
 {
-	*p_serial_comp << "wrist";
+	*p_serial_comp << endl << "wrist" << endl;
 	output_to_motor(12,90);
 	output_to_motor(13,90);
 }
 
 void task_output::wrist_twisted(void)
 {
-	*p_serial_comp << "wrist";
+	*p_serial_comp << endl << "wrist" << endl;
 	output_to_motor(12,0);
 	output_to_motor(13,90);
 }
 
 void task_output::wrist_z1(void)
 {
-	*p_serial_comp << "wrist";
+	*p_serial_comp << endl << "wrist" << endl;
 	output_to_motor(12,45);
 	output_to_motor(13,45);
 }
 
 void task_output::wrist_z2(void)
 {
-	*p_serial_comp << "wrist";
+	*p_serial_comp << endl << "wrist" << endl;
 	output_to_motor(12,45);
 	output_to_motor(13,0);
 }
 
 void task_output::wrist_z3(void)
 {
-	*p_serial_comp << "wrist";
+	*p_serial_comp << endl << "wrist" << endl;
 	output_to_motor(12,90);
 	output_to_motor(13,45);
 }

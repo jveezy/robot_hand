@@ -58,6 +58,7 @@ class task_user : public stl_task
 		bool				flag_comma;				///< Flag to indicate a comma character
 		bool				flag_space;				///< Flag to indicate a space character
 		bool				flag_delay_countdown;	///< Flag to indicate the output delay countdown has begun
+		bool				flag_outputting_letter;	///< Flag to indicate whether outputting a letter or pause
 		
 		queue<char, unsigned char, MAX_SENTENCE_SIZE> character_buffer;	///< Character buffer
 		

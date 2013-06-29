@@ -31,7 +31,7 @@
 class slave_picker
 {
 	protected:
-		unsigned char pinarray[4];	// Create pin array
+		unsigned char		pinarray[4];	// Create pin array
 		base_text_serial* 	p_serial_comp;			///< Pointer to serial device for computer
 
 	public:

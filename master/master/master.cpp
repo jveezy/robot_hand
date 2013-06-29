@@ -85,8 +85,6 @@ int main ()
 			task_user user_task (the_timer, interval_time, &sport_comp, &sport_slave, &the_slave_picker, &output_task);
 			
 			// Turn on interrupt processing so the timer can work
-//			DDRA = 0xFF;	// Set all pins in register A to be outputs
-//			PORTA |= (1 << PINA0);
 			sei ();
 
 	// Run the main scheduling loop, in which the tasks are continuously scheduled.

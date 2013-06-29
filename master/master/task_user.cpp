@@ -81,6 +81,7 @@ char task_user::run (char state)
 		case(0):
 			if(!flag_message_printed)
 			{
+				p_serial_comp->clear_screen();
 				*p_serial_comp << endl << endl << "Robotic Fingerspelling Hand" << endl << endl;
 				*p_serial_comp <<	endl << "ESC Stop Motors" << 
 									endl << "C   Calibrate" << 
@@ -136,14 +137,20 @@ char task_user::run (char state)
 			*p_serial_comp << endl << "Calibrate which motor?" << endl << endl << "1 - M1" << endl << "2 - M2"
 			<< endl << "3 - M3" << endl << "4 - M4" << endl << "5 - M5" << endl << "6 - M6" << endl << "7 - M7"
 			<< endl << "8 - M8" << endl << "9 - M9" << endl << "0 - M10" << endl << "ESC Cancel" << endl;
-			return(3);	// return to state 0 (home screen)
+			return(3);	// Process input in state 3
 			break;
 		// Perform calibration
 		case(3):
 			if(p_serial_comp->check_for_char())
 			{
 				input_character = p_serial_comp->getchar();		// Collect character
-					
+				
+				// Clear character buffer
+				while(p_serial_slave ->check_for_char())
+				{
+					p_serial_slave->getchar();
+				}
+				
 				if( (input_character >= 0x31) && (input_character <= 0x39) )
 				{
 					// Subtract 0x30 from input character to get decimal value
@@ -157,7 +164,7 @@ char task_user::run (char state)
 					{
 						*p_serial_slave << 'C';
 					}
-					return(2);		// Go back to state 2 (calibrate menu)
+					return(16);		// Wait for response in state 16
 				}
 				else if ( input_character == '0' )
 				{
@@ -169,14 +176,14 @@ char task_user::run (char state)
 					{
 						*p_serial_slave << 'C';
 					}
-					return(2);		// Go back to state 2 (calibrate menu)
+					return(16);		// Wait for response in state 16
 				}
 				else if (input_character == 0x1B)	// Escape
 				{
 					return(0);		// Go back to state 0 (home screen)
 				}
 				else
-				{			break;
+				{
 					*p_serial_comp << endl << "Invalid character" << endl;
 					return(2);	// Reprint message and remain in loop until valid character received
 				}
@@ -209,7 +216,7 @@ char task_user::run (char state)
 				{
 					if (character_buffer.num_items() <= MAX_SENTENCE_SIZE )	// If it is and there's room in the character buffer
 					{
-						*p_serial_comp << ascii << input_character;						// Echo character to the screen
+						*p_serial_comp << ascii << input_character << numeric;	// Echo character to the screen
 						character_buffer.put(input_character);					// store it directly into the character buffer
 					}
 					else														// If the character buffer is full, scream at the user.
@@ -225,7 +232,7 @@ char task_user::run (char state)
 							
 						input_character = input_character - ('a' - 'A');		// convert it to a capital letter first.
 						character_buffer.put(input_character);					// Store it in the character buffer
-						*p_serial_comp << ascii << input_character;						// Echo character to the screen
+						*p_serial_comp << ascii << input_character << numeric;	// Echo character to the screen
 					}
 					else														// If the character buffer is full, scream at the user.
 					{
@@ -235,13 +242,13 @@ char task_user::run (char state)
 				// If backspace (hex 08)
 				else if (input_character == 0x08)
 				{
-					*p_serial_comp << ascii << backspace << ' ' << backspace;		// Backspace, space, backspace to step back, erase, and move the cursor back.
+					*p_serial_comp << ascii << backspace << " " << backspace << numeric;	// Backspace, space, backspace to step back, erase, and move the cursor back.
 					character_buffer.delete_one();				// Delete the last character stored in the buffer.
 				}
 				// If question mark or exclamation point, store as period.
 				else if ( (input_character == '?')||(input_character == '!') )
 				{
-					*p_serial_comp << ascii << input_character;						// Echo character to the screen
+					*p_serial_comp << ascii << input_character << numeric;	// Echo character to the screen
 					input_character = '.';									// convert it to a period first
 					character_buffer.put(input_character);					// Store it in the character buffer
 				}
@@ -251,6 +258,13 @@ char task_user::run (char state)
 					*p_serial_comp << endl << "Parsing sentence." << endl;
 					flag_message_printed = false;
 					return(5);	// Go to state 5
+				}
+				// If ESC is pressed, user is quitting
+				else if (input_character == 0x1B)
+				{
+					*p_serial_comp << endl << "Quitting" << endl;
+					flag_message_printed = false;
+					return(0);	// Go to state 5
 				}
 				// If any other characters are pressed
 				else
@@ -265,13 +279,6 @@ char task_user::run (char state)
 			break;
 		// Prepare one character for output
 		case(5):
-			/* *p_serial_comp << endl;
-			for (unsigned char i = 0; i < character_buffer.num_items(); i++)
-			{
-				*p_serial_comp << character_buffer[i];
-				*p_serial_comp << ascii << p_character_database->character_array[p_character_database->get_index(character_buffer[i])].get_steps();
-				*p_serial_comp << " ";
-			}*/
 			if(character_buffer.num_items())	// If character buffer is not empty
 			{
 				character_to_output = character_buffer.get();						// Retrieve the character
@@ -279,12 +286,12 @@ char task_user::run (char state)
 				// If it's not a pause character, collect information.
 				if ((character_to_output != '.')||(character_to_output != ',')||(character_to_output != ' '))
 				{
-					*p_serial_comp << endl << "Collecting info for " << ascii << character_to_output << dec << endl;
+					flag_outputting_letter = true;
 				}
-					
 				// If it's a pause character, set the proper flag.
 				else
 				{
+					flag_outputting_letter = false;
 					switch(character_to_output)
 					{
 						case('.'):
@@ -345,15 +352,30 @@ char task_user::run (char state)
 				return(STL_NO_TRANSITION);	// Keep delaying until ready
 			}
 			break;
-		// Retrieve and set gesture output values	
+		// Output values
 		case(8):
-			p_task_output -> set_new_character(character_to_output);
-			return(5);	// Return to message prompt
+			if (p_task_output -> ready_to_output())
+			{	
+				p_task_output -> set_new_character(character_to_output);
+				return(5);	// Output next letter
+			}
+			else
+			{
+				return(STL_NO_TRANSITION);	// Wait
+			}
 			break;
 		// Done
 		case(9):
-			*p_serial_comp << endl << "Message done. Returning to message prompt." << endl;
-			return(4);	// Return to message prompt
+			if (p_task_output -> ready_to_output() && flag_outputting_letter == true)
+			{
+				*p_serial_comp << endl << "Message done. Returning to message prompt." << endl;
+				flag_outputting_letter = false;
+				return(4);	// Return to message prompt
+			}
+			else
+			{
+				return(STL_NO_TRANSITION);	// Wait
+			}
 			break;
 		// Encoder Reading Prompt
 		case(10):
@@ -368,6 +390,12 @@ char task_user::run (char state)
 			{
 				input_character = p_serial_comp->getchar();		// Collect character
 				
+				// Clear slave character buffer
+				while(p_serial_slave ->check_for_char())
+				{
+					p_serial_slave->getchar();
+				}
+				
 				if( (input_character >= 0x31) && (input_character <= 0x39) )
 				{
 					// Subtract 0x30 from input character to get decimal value
@@ -381,11 +409,7 @@ char task_user::run (char state)
 					{
 						*p_serial_slave << 'E';
 					}
-					
-					encoder_reading = p_serial_comp->getchar();
-					*p_serial_comp << endl << "Encoder reading: " << dec << encoder_reading << ascii << endl;
-					
-					return(10);		// Go back to state 10 (encoder prompt)
+					return(12);		// Go back to state 10 (encoder prompt)
 				}
 				else if ( input_character == '0' )
 				{
@@ -397,7 +421,7 @@ char task_user::run (char state)
 					{
 						*p_serial_slave << 'E';
 					}
-					return(10);		// Go back to state 10 (encoder prompt)
+					return(12);		// Go back to state 10 (encoder prompt)
 				}
 				else if (input_character == 0x1B)	// Escape
 				{
@@ -410,18 +434,46 @@ char task_user::run (char state)
 				}
 			}
 			break;
-		// Manual Mode Prompt
+		// Wait for encoder count return
 		case(12):
+			if(p_serial_slave->check_for_char())
+			{
+				encoder_reading = p_serial_slave -> getchar();
+				*p_serial_comp << endl << "Encoder reading: " << numeric << encoder_reading << endl;
+				return(10);	// Return to encoder prompt
+			}
+			else if (p_serial_comp ->check_for_char())
+			{
+				input_character = p_serial_comp->getchar();
+				if (input_character == 0x1B)
+				{
+					*p_serial_comp << endl << "Reading cancelled" << endl;
+					return(10);
+				}
+			}
+			else
+			{
+				return(STL_NO_TRANSITION);
+			}
+			break;
+		// Manual Mode Prompt
+		case(13):
 			*p_serial_comp << endl << "Control which motor?" << endl << endl << "1 - M1" << endl << "2 - M2"
 			<< endl << "3 - M3" << endl << "4 - M4" << endl << "5 - M5" << endl << "6 - M6" << endl << "7 - M7"
 			<< endl << "8 - M8" << endl << "9 - M9" << endl << "0 - M10" << endl << "ESC Cancel" << endl;
-			return(13);
+			return(14);
 			break;
 		// Manual Mode Processing
-		case(13):
+		case(14):
 			if(p_serial_comp->check_for_char())
 			{
-				input_character = p_serial_comp->getchar();		// Collect character
+				input_character = p_serial_comp -> getchar();		// Collect character
+				
+				// Clear slave character buffer
+				while(p_serial_slave ->check_for_char())
+				{
+					p_serial_slave->getchar();
+				}
 				
 				if( (input_character >= 0x31) && (input_character <= 0x39) )
 				{
@@ -443,33 +495,61 @@ char task_user::run (char state)
 				else
 				{
 					*p_serial_comp << endl << "Invalid character" << endl;
-					return(12);		// Go back to state 10 (encoder prompt)
+					return(13);		// Go back to state 13 (encoder prompt)
 				}
 				*p_serial_comp << endl << "Input command. ESC to exit." << endl;
-				return(14);
+				return(15);
 			}
 			break;
-		case(14):
+		case(15):
 			// Command Prompt
-			if(p_serial_comp->check_for_char())
+			if(p_serial_comp -> check_for_char())
 			{	
-				input_character = p_serial_comp ->getchar();
+				input_character = p_serial_comp -> getchar();
 				
 				if (input_character != 0x1B)
 				{
-					if(p_serial_slave->ready_to_send())
+					if(p_serial_slave -> ready_to_send())
 					{
 						*p_serial_slave << input_character;
-						*p_serial_comp << endl << "Sent " << ascii << input_character << dec << " to motor." << endl;
+						*p_serial_comp << endl << "Sent " << ascii << input_character << numeric << " to motor." << endl;
 					}
 				}
 				else
 				{
-					return(12);	// Return to motor list if ESC pressed
+					return(13);	// Return to motor list if ESC pressed
 				}
 				return(STL_NO_TRANSITION);		// Stay here unless ESC pressed
 			}
 			return(STL_NO_TRANSITION);
+			break;
+		// Wait for calibration response
+		case(16):
+			if (p_serial_slave -> check_for_char())
+			{
+				input_character = p_serial_slave -> getchar();
+				if (input_character == 'c')
+				{
+					*p_serial_comp << endl << "Calibration successful." << endl;
+				}
+				else
+				{
+					*p_serial_comp << endl << "Calibration failed." << endl;
+				}
+			}
+			else if (p_serial_comp -> check_for_char())
+			{
+				input_character = p_serial_comp -> getchar();
+				if (input_character == 0x1B)
+				{
+					*p_serial_comp << endl << "Calibration cancelled" << endl;
+					return(2);
+				}
+			}
+			else
+			{
+				return (STL_NO_TRANSITION);
+			}
 			break;
 		default:
 			break;

@@ -58,8 +58,10 @@ class task_output : public stl_task
 		bool				flag_interference_ring;
 		bool				flag_interference_pinky;
 		bool				flag_motors_enabled;
+		bool				flag_ready_to_output;
 		unsigned char		character_step;
 		unsigned char		i;
+		char				motornumber;
 
 	public:
 		// The constructor creates a new task object
@@ -67,9 +69,6 @@ class task_output : public stl_task
 
 		// The run method is where the task actually performs its function
 		char run (char);
-		
-		// Change Output Values
-		void change_output(unsigned char, unsigned char);
 
 		void set_new_character(unsigned char);
 		
@@ -79,6 +78,7 @@ class task_output : public stl_task
 		void init_motor (unsigned char);
 		//void set_motor (unsigned char);
 		void output_to_motor(unsigned char, unsigned char);
+		bool ready_to_output(void);
 		
 		void open_thumb(void);
 		void open_index(void);

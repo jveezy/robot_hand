@@ -51,7 +51,7 @@ slave_picker::slave_picker (base_text_serial* p_ser_comp)
 
 void slave_picker::choose (unsigned char pinnumber)
 {
-	*p_serial_comp << endl << "Motor " << pinnumber;
+	*p_serial_comp << numeric << " Mot " << pinnumber;
 	
 	// Split number into individual bits
 	for(unsigned char i = 0; i < 4; i++)
