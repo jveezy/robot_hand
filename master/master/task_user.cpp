@@ -75,6 +75,7 @@ task_user::task_user (task_timer& a_timer, time_stamp& t_stamp, base_text_serial
 
 char task_user::run (char state)
 {
+	//*p_serial_comp << endl << "Use State " << state << endl;
 	switch(state)
 	{
 		// Home screen
@@ -125,11 +126,8 @@ char task_user::run (char state)
 			break;
 		// Stop motors
 		case(1):
-			for(i_motor = 1; i_motor < 11; i_motor++)
-			{
-				p_task_output->stop_motor(i_motor);
-			}
-			*p_serial_comp << endl << "State 1: Motors Stopped" << endl;
+			*p_serial_comp << endl << "Sending stop command" << endl;
+			p_task_output->stop_motor();
 			return(0);	// return to state 0 (home screen)
 			break;
 		// Print calibration messages
@@ -354,6 +352,14 @@ char task_user::run (char state)
 			break;
 		// Output values
 		case(8):
+			// Enable motors if they're disabled
+			if (!(p_task_output -> motors_enabled()))
+			{
+				p_task_output -> init_motor();
+				p_task_output -> start_motor();
+			}
+			
+			// Output the character
 			if (p_task_output -> ready_to_output())
 			{	
 				p_task_output -> set_new_character(character_to_output);
@@ -439,6 +445,7 @@ char task_user::run (char state)
 			if(p_serial_slave->check_for_char())
 			{
 				encoder_reading = p_serial_slave -> getchar();
+				encoder_reading = encoder_reading*4;	// Convert from 8 bit truncated count to 10 bit count
 				*p_serial_comp << endl << "Encoder reading: " << numeric << encoder_reading << endl;
 				return(10);	// Return to encoder prompt
 			}

@@ -73,7 +73,13 @@ task_output::task_output (task_timer& a_timer, time_stamp& t_stamp, base_text_se
 	flag_interference_middle = false;
 	flag_interference_ring = false;
 	flag_interference_pinky = false;
+	flag_stop_motors = false;
+	flag_start_motors = false;
+	flag_init_motors = false;
 	character_step = 1;
+	motor_to_init = 1;
+	motor_to_start = 1;
+	motor_to_stop = 1;
 	
 	MOTOR_SWITCH_DDR |= (1 << MOTOR_SWITCH_PIN);
 	MOTOR_SWITCH_PORT &= ~(1 << MOTOR_SWITCH_PIN);
@@ -92,16 +98,33 @@ task_output::task_output (task_timer& a_timer, time_stamp& t_stamp, base_text_se
 
 char task_output::run (char state)
 {
+	//*p_serial_comp << endl << "Out State " << state << endl;
+	
 	switch(state)
 	{
 		// Wait for output change
 		case(0):
-			flag_ready_to_output = true;
-			//*p_serial_comp << endl << "Output task state 0." << endl;		
-			if(flag_output_change)
+			if (flag_stop_motors)
+			{
+				return(3);
+			}
+			else if (flag_start_motors)
+			{
+				return(5);
+			}
+			else if(flag_init_motors)
+			{
+				return(7);
+			}
+			else if(flag_output_change)
 			{
 				flag_output_change = false;
 				return(1);	// Go to state 1 (Check for interferences)
+			}
+			else
+			{
+				flag_ready_to_output = true;
+				return(STL_NO_TRANSITION);				
 			}
 			break;
 		// Check for interferences		
@@ -138,12 +161,6 @@ char task_output::run (char state)
 		case(2):	
 			if (!flag_motors_enabled)
 			{
-				*p_serial_comp << endl << "Initializing motors" << endl;
-				// Initialize all motors
-				for (i = 1; i < 11; i++)
-				{
-					init_motor(i);
-				}
 				flag_motors_enabled = true;
 			}	
 			// Parse character
@@ -669,16 +686,118 @@ char task_output::run (char state)
 				
 			return(0);	// Go to state 2 (output) when done
 			break;
-				
-/*		// Output to motor controllers
-		case(2):		
-			for(unsigned char i = 1; i < 14; i++)
+		// Send Stop Command to a Motor
+		case(3):
+			flag_stop_motors = false;
+			p_slave_chooser->choose(motor_to_stop);
+			if(p_serial_slave->ready_to_send())
 			{
-				output_to_motor(i,output[i]);
+				*p_serial_slave << "S";
 			}
-			return(0);	// Return to state 0 (wait) when done
+			return(4);
 			break;
-*/		
+		// Wait for confirmation on stop command
+		case(4):
+			if(p_serial_slave->check_for_char())
+			{
+				input_character = p_serial_slave->getchar();
+				if (input_character == 's')
+					*p_serial_comp << endl << "Motor " << motor_to_stop << " stopped";
+				else
+					*p_serial_comp << endl << "Motor stop error " << motor_to_stop << endl;
+				
+				if (motor_to_stop == 10)
+				{
+					motor_to_stop = 1;
+					return(0);
+				}
+				else
+				{
+					motor_to_stop++;
+					return(3);
+				}
+			}
+			else
+			{
+				return(STL_NO_TRANSITION);
+			}
+		// Send Start Command to a Motor
+		case(5):
+			flag_start_motors = false;
+			p_slave_chooser->choose(motor_to_start);
+			if(p_serial_slave->ready_to_send())
+			{
+				*p_serial_slave << "G";
+			}
+			return(6);
+			break;
+		// Wait for confirmation on start command
+		case(6):
+			if(p_serial_slave->check_for_char())
+			{
+				input_character = p_serial_slave->getchar();
+				if (input_character == 'g')
+					*p_serial_comp << endl << "Motor " << motor_to_start << " enabled";
+				else
+					*p_serial_comp << endl << "Motor start error " << motor_to_start << endl;
+				
+				if (motor_to_start == 10)
+				{
+					motor_to_start = 1;
+					return(0);
+				}
+				else
+				{
+					motor_to_start++;
+					return(5);
+				}
+			}
+			else
+			{
+				return(STL_NO_TRANSITION);
+			}
+		// Send initialization command to one motor
+		case(7):
+			p_slave_chooser->choose(motor_to_init);
+			if(p_serial_slave->ready_to_send())
+			{
+				if (motor_to_init > 0 && motor_to_init < 10)
+					character_to_output = motor_to_init + 0x30;
+				else if (motor_to_init == 10)
+					character_to_output = '0';
+				else
+					*p_serial_comp << endl << "Motor conf error " << motor_to_init << endl;
+			
+				*p_serial_slave << character_to_output;
+				return(8);
+			}
+			break;
+		// Wait for initialization response from motor
+		case(8):
+			if(p_serial_slave->check_for_char())
+			{
+				input_character = p_serial_slave->getchar();
+				if (input_character == '!')
+					*p_serial_comp << endl << "Motor " << motor_to_init << " initialized";
+				else
+					*p_serial_comp << endl << "Motor init error " << motor_to_init << endl;
+				
+				if (motor_to_init == 10)
+				{
+					motor_to_init = 1;
+					return(0);
+				}
+				else
+				{
+					motor_to_init++;
+					return(7);
+				}
+			}
+			else
+			{
+				return(STL_NO_TRANSITION);
+			}
+			break;
 		default:
 			return(0);
 			break;
@@ -695,34 +814,23 @@ void task_output::set_new_character(unsigned char outchar)
 	flag_output_change = true;
 }
 
-void task_output::stop_motor(unsigned char motornum)
+void task_output::stop_motor(void)
 {
-	p_slave_chooser->choose(motornum);
-	if(p_serial_slave->ready_to_send())
-	{
-		*p_serial_slave << "S";
-		/*input_character = p_serial_comp->getchar();		// Wait for response
-		if (input_character != 's')
-		{
-			*p_serial_comp << endl << "Motor stop error " << motornum << endl;
-		}*/
-	}
-	
+	motor_to_stop = 1;
+	flag_stop_motors = true;
 	flag_motors_enabled = false;
 }
 
-void task_output::start_motor(unsigned char motornum)
+void task_output::start_motor(void)
 {
-	p_slave_chooser->choose(motornum);
-	if(p_serial_slave->ready_to_send())
-	{
-		*p_serial_slave << "G";
-		/*input_character = p_serial_comp->getchar();		// Wait for response
-		if (input_character != 'g')
-		{
-			*p_serial_comp << endl << "Motor enable error " << motornum << endl;
-		}*/
-	}
+	motor_to_start = 1;
+	flag_start_motors = true;
+	flag_motors_enabled = true;
+}
+
+bool task_output::motors_enabled(void)
+{
+	return(flag_motors_enabled);
 }
 
 bool task_output::query_motor(unsigned char motornum)
@@ -752,46 +860,11 @@ bool task_output::query_motor(unsigned char motornum)
 	
 }
 
-void task_output::init_motor(unsigned char motornum)
+void task_output::init_motor(void)
 {
-	p_slave_chooser->choose(motornum);
-	if(p_serial_slave->ready_to_send())
-	{
-		if (motornum > 0 && motornum < 10)
-			character_to_output = motornum + 0x30;
-		else if (motornum == 10)
-			character_to_output = '0';
-		else
-			*p_serial_comp << endl << "Motor conf error " << motornum << endl;
-			
-		*p_serial_slave << character_to_output;
-		/*input_character = p_serial_comp->getchar();		// Wait for response
-		if (input_character != '!')
-		{
-			*p_serial_comp << endl << "Motor conf error " << motornum << endl;
-		}*/
-	}
+	motor_to_init = 1;
+	flag_init_motors = true;
 }
-
-/*void task_output::output_to_motor(unsigned char motornum, unsigned char setpoint)
-{
-	if (motornum < 12)
-	{
-		p_slave_chooser->choose(motornum);
-		if(p_serial_slave->ready_to_send())
-		{
-			*p_serial_slave << setpoint;
-			input_character = p_serial_comp->getchar();		// Wait for response
-			if (input_character != 'A')
-			{
-				*p_serial_comp << endl << "Motor set error " << motornum << endl;
-			}
-		}
-	}
-	else
-	
-	
-}*/
 
 void task_output::output_to_motor (unsigned char motornumber, unsigned char output_value)
 {

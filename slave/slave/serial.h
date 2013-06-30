@@ -20,7 +20,7 @@
 
 #define CPU_FREQ_Hz	20000000
 #define BAUD_RATE	9600
-#define BAUD_DIV	(((CPU_FREQ_Hz) / (16UL * (BAUD_RATE))) - 1)
+#define BAUD_DIV	((CPU_FREQ_Hz) / (16UL * (BAUD_RATE)))
 
 //============================================================================================================
 

@@ -52,6 +52,9 @@ class task_output : public stl_task
 		bool				flag_output_change;
 		unsigned char		input_character;
 		unsigned char		character_to_output;
+		unsigned char		motor_to_stop;
+		unsigned char		motor_to_start;
+		unsigned char		motor_to_init;
 		bool				flag_interference_thumb;
 		bool				flag_interference_index;
 		bool				flag_interference_middle;
@@ -59,9 +62,11 @@ class task_output : public stl_task
 		bool				flag_interference_pinky;
 		bool				flag_motors_enabled;
 		bool				flag_ready_to_output;
+		bool				flag_stop_motors;
+		bool				flag_start_motors;
+		bool				flag_init_motors;
 		unsigned char		character_step;
 		unsigned char		i;
-		char				motornumber;
 
 	public:
 		// The constructor creates a new task object
@@ -72,10 +77,11 @@ class task_output : public stl_task
 
 		void set_new_character(unsigned char);
 		
-		void stop_motor (unsigned char);
-		void start_motor (unsigned char);
+		void stop_motor (void);
+		void start_motor (void);
+		bool motors_enabled(void);
 		bool query_motor (unsigned char);
-		void init_motor (unsigned char);
+		void init_motor (void);
 		//void set_motor (unsigned char);
 		void output_to_motor(unsigned char, unsigned char);
 		bool ready_to_output(void);

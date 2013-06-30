@@ -89,6 +89,7 @@
 	motor mtr;
 	serial sport;
 
+
 //============================================================================================================
 /* State-Transition Logic Tasks */
 
@@ -207,7 +208,7 @@
 							default:
 								break;
 						}
-						sport.send('A');		// Confirm command reception
+						//sport.send('A');		// Confirm command reception
 						state_data = 6;
 						break;
 					// S,G disable and enable the motor
@@ -330,6 +331,12 @@ int main(void)
 	
 	// Turn on interrupts
 	sei();
+	
+	// Motor Data
+	for (i = 1; i<10; i++)
+	{
+		kp_array[i] = 4;
+	}
 
 // Loop
 
