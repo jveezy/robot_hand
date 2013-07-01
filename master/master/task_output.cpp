@@ -84,8 +84,7 @@ task_output::task_output (task_timer& a_timer, time_stamp& t_stamp, base_text_se
 	MOTOR_SWITCH_DDR |= (1 << MOTOR_SWITCH_PIN);
 	MOTOR_SWITCH_PORT &= ~(1 << MOTOR_SWITCH_PIN);
 	
-	*p_serial_comp << endl << "Output task initialized." << endl;
-	
+	//*p_serial_comp << endl << "Output task initialized." << endl;
 }
 
 //-------------------------------------------------------------------------------------
@@ -126,6 +125,7 @@ char task_output::run (char state)
 				flag_ready_to_output = true;
 				return(STL_NO_TRANSITION);				
 			}
+			return(STL_NO_TRANSITION);
 			break;
 		// Check for interferences		
 		case(1):

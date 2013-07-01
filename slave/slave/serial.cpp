@@ -45,7 +45,7 @@ serial::serial (void)
 	UCSRC = (1 << UCSZ1) | (1 << UCSZ0);	// Set UCSZ bits to 8 bit character size
 	
 	// Calculate baud rate divisor
-	UBRRH = 0x00;//(unsigned char)(BAUD_DIV >> 8);
+	UBRRH = (unsigned char)(BAUD_DIV >> 8);
 	UBRRL = (unsigned char) BAUD_DIV;
 	
 	// Setup USART Control and Status Register A (UCSRA)

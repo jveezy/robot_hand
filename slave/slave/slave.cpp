@@ -45,6 +45,8 @@
 //============================================================================================================
 /* Variable Definitions and Initialization */
 
+	//uint8_t mcucsr __attribute__((section(".noinit")));
+
 	// Serial Port
 	char 			character_in;		// Incoming character read by serial port
 	char				throwaway;		// Throwaway character from when other chips are talked to
@@ -88,6 +90,8 @@
 	// Objects
 	motor mtr;
 	serial sport;
+	
+	
 
 
 //============================================================================================================
@@ -118,7 +122,7 @@
 				state_motor = 0;	// go to state 0
 				break;
 			case(2):		// Calculate Motor Output
-			
+
 				// Calculate control loop error
 				control_error = count - desired_count;
 					
@@ -263,7 +267,7 @@
 				// Load angle data
 				for (i_angle = 0; i < 5; i++)
 				{
-					set_point_angles[i_angle] = angles[i_angle][motor_number-1];
+//					set_point_angles[i_angle] = angles[i_angle][motor_number-1];
 				}
 				
 				// Load gain data
@@ -301,16 +305,17 @@
 
 // Initialize variables
 
-
 int main(void)
 {
 
+	
 // Setup
 
 	// Create objects
 	motor mtr;	// Create motor
 	serial sport;	// Create serial port
-	
+
+
 	// Setup Encoder Data Directions
 	INTERRUPT_DDR &= ~(1 << PIN_INT0);	// Input
 	INTERRUPT_DDR &= ~(1 << PIN_INT1);	// Input
@@ -333,15 +338,23 @@ int main(void)
 	sei();
 	
 	// Motor Data
-	for (i = 1; i<10; i++)
+/*	for (i = 1; i<10; i++)
 	{
 		kp_array[i] = 4;
 	}
+*/
+	bool data_sent = false;
 
 // Loop
 
 	while(true)	// loop forever between these two tasks
 	{		
+		if (!data_sent)
+		{
+			sport.send('A');
+			data_sent = true;
+		}
+
 		state_motor = motor_task(state_motor, &mtr);
 		state_data = data_task(state_data, &sport, &mtr);
 	}	
@@ -355,6 +368,7 @@ int main(void)
 // Interrupt for Encoder Channel A
 ISR(INT0_vect)
 {
+	
 	// Store last reading to old variable
 	previous_reading = current_reading;
 	

@@ -37,22 +37,23 @@
         </dependencies>
       </framework-data>
     </AsfFrameworkConfig>
-    <avrtoolinterface>HVPP</avrtoolinterface>
-    <avrtool>com.atmel.avrdbg.tool.stk500</avrtool>
+    <avrtoolinterface>
+    </avrtoolinterface>
+    <avrtool>com.atmel.avrdbg.tool.simulator</avrtool>
     <com_atmel_avrdbg_tool_stk500>
-      <ToolType xmlns="">com.atmel.avrdbg.tool.stk500</ToolType>
-      <ToolName xmlns="">STK500</ToolName>
-      <ToolNumber xmlns="">
+      <ToolType>com.atmel.avrdbg.tool.stk500</ToolType>
+      <ToolName>STK500</ToolName>
+      <ToolNumber>
       </ToolNumber>
-      <StimuliFile xmlns="">
+      <StimuliFile>
       </StimuliFile>
-      <Channel xmlns="">
+      <Channel>
         <host>127.0.0.1</host>
-        <port>60368</port>
+        <port>51437</port>
         <ssl>False</ssl>
       </Channel>
-      <ToolOptions xmlns="">
-        <InterfaceName>HVPP</InterfaceName>
+      <ToolOptions>
+        <InterfaceName>ISP</InterfaceName>
         <InterfaceProperties>
           <JtagDbgClock>249000</JtagDbgClock>
           <SwdClock>249000</SwdClock>
@@ -67,6 +68,19 @@
         </InterfaceProperties>
       </ToolOptions>
     </com_atmel_avrdbg_tool_stk500>
+    <com_atmel_avrdbg_tool_simulator>
+      <ToolType xmlns="">com.atmel.avrdbg.tool.simulator</ToolType>
+      <ToolName xmlns="">Simulator</ToolName>
+      <ToolNumber xmlns="">
+      </ToolNumber>
+      <StimuliFile xmlns="">
+      </StimuliFile>
+      <Channel xmlns="">
+        <host>127.0.0.1</host>
+        <port>63831</port>
+        <ssl>False</ssl>
+      </Channel>
+    </com_atmel_avrdbg_tool_simulator>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
     <ToolchainSettings>

@@ -82,7 +82,6 @@ char task_user::run (char state)
 		case(0):
 			if(!flag_message_printed)
 			{
-				p_serial_comp->clear_screen();
 				*p_serial_comp << endl << endl << "Robotic Fingerspelling Hand" << endl << endl;
 				*p_serial_comp <<	endl << "ESC Stop Motors" << 
 									endl << "C   Calibrate" << 
@@ -93,7 +92,6 @@ char task_user::run (char state)
 			}
 			if(p_serial_comp->check_for_char())
 			{
-				*p_serial_comp << endl << "Character received!" << endl;
 				flag_message_printed = false;
 				input_character = p_serial_comp->getchar();
 				switch(input_character)
@@ -114,7 +112,7 @@ char task_user::run (char state)
 						break;
 					case('M'):
 					case('m'):
-						return(12);	// Go to state 12 (Manual mode)
+						return(13);	// Go to state 13 (Manual mode)
 						break;
 					default:
 						*p_serial_comp << endl << "Invalid command" << endl;
